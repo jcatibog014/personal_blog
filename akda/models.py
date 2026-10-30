@@ -1,15 +1,18 @@
 """The data model.
 
     users ─┬─< posts ─┬─< post_tags >── tags
-           │          └─< comments ──< comment_reports >── users
-           └─< comments (parent_id points at another comment: one level of replies)
+           │          ├─< post_versions
+           │          ├─< comments ──< comment_reports >── users
+           │          └── images (the cover)
+           ├─< comments (parent_id points at another comment: one level of replies)
+           └─< images
 
 Roles live on the user (permissions.py holds every rule about them).
 Times are naive UTC (dates.utcnow()).
 """
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, Column, ForeignKey, String, Table, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, ForeignKey, LargeBinary, String, Table, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .dates import utcnow
@@ -49,6 +52,22 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
     posts: Mapped[list["Post"]] = relationship(back_populates="author")
+
+
+class Image(Base):
+    """A cover or a picture in a post, as small WebP bytes (images.py)."""
+    __tablename__ = "images"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)  # deferred: only the picture's own address loads it
+    mime: Mapped[str] = mapped_column(String(30))
+    width: Mapped[int]
+    height: Mapped[int]
+    size: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+    owner: Mapped[User] = relationship()
 
 
 # A plain many-to-many table: both columns together are the key, so a post
@@ -92,6 +111,7 @@ class Post(Base):
     # Scheduling is a date in the future. posts.live_filter() is the rule.
     published_at: Mapped[datetime | None] = mapped_column(index=True)
     reading_minutes: Mapped[int] = mapped_column(default=1)
+    cover_image_id: Mapped[int | None] = mapped_column(ForeignKey("images.id", ondelete="SET NULL"))
     # SQLAlchemy adds 1 on every save. A save from an out-of-date tab fails instead
     # of overwriting newer text (the editor also sends the number it started from).
     revision: Mapped[int] = mapped_column()
@@ -102,8 +122,26 @@ class Post(Base):
 
     author: Mapped[User] = relationship(back_populates="posts")
     tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts", order_by="Tag.name")
+    cover: Mapped["Image | None"] = relationship()
+    versions: Mapped[list["PostVersion"]] = relationship(back_populates="post", cascade="all, delete-orphan",
+                                                         passive_deletes=True)
     comments: Mapped[list["Comment"]] = relationship(back_populates="post", cascade="all, delete-orphan",
                                                      passive_deletes=True)
+
+
+class PostVersion(Base):
+    """A saved copy of a post's words. Made by Save, Publish and Update, never by autosave."""
+    __tablename__ = "post_versions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id", ondelete="CASCADE"), index=True)
+    saved_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    title: Mapped[str] = mapped_column(String(200), default="")
+    summary: Mapped[str] = mapped_column(String(300), default="")
+    body_md: Mapped[str] = mapped_column(Text, default="", deferred=True)
+    saved_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+    post: Mapped[Post] = relationship(back_populates="versions")
 
 
 class Comment(Base):

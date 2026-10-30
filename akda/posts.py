@@ -8,12 +8,12 @@ import math
 import re
 import unicodedata
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.orm import selectinload, undefer
 
 from . import render, tags
-from .dates import to_local
-from .models import DRAFT, PUBLISHED, Post, Tag, User, post_tags
+from .dates import parse_local, to_local
+from .models import DRAFT, PUBLISHED, Post, PostVersion, Tag, User, post_tags
 
 TITLE_MAX_LENGTH = 200
 SUMMARY_MAX_LENGTH = 300
@@ -21,6 +21,7 @@ BODY_MAX_LENGTH = 100_000
 SLUG_MAX_LENGTH = 80
 WORDS_PER_MINUTE = 200
 GRID_SIZE = 12
+MAX_VERSIONS = 30
 
 
 # ---------- What is live? ----------
@@ -82,7 +83,7 @@ def reading_minutes(text):
 
 def blank_form(post):
     return {"title": post.title, "summary": post.summary, "body_md": post.body_md,
-            "tags": ", ".join(tag.name for tag in post.tags)}
+            "tags": ", ".join(tag.name for tag in post.tags), "publish_at": ""}
 
 
 def read_form(form):
@@ -92,7 +93,21 @@ def read_form(form):
         # Windows browsers send \r\n in text boxes. Keep one kind of line ending.
         "body_md": form.get("body_md", "").replace("\r\n", "\n"),
         "tags": form.get("tags", "").strip(),
+        "publish_at": form.get("publish_at", "").strip(),
     }
+
+
+def read_schedule(text, now):
+    """What the date box says -> (when, problem). Empty means "no date"."""
+    if not text:
+        return None, None
+    try:
+        when = parse_local(text)
+    except ValueError:
+        return None, "That isn't a date and time."
+    if when <= now:
+        return None, "Choose a time in the future."
+    return when, None
 
 
 def form_errors(data, publishing):
@@ -138,6 +153,36 @@ def publish(s, post, when):
 def unpublish(post):
     post.status = DRAFT
     post.published_at = None
+
+
+def is_scheduled(post, now):
+    return post.status == PUBLISHED and post.published_at > now
+
+
+# ---------- Version history ----------
+
+def versions_of(s, post):
+    return s.scalars(select(PostVersion).where(PostVersion.post_id == post.id)
+                     .order_by(PostVersion.saved_at.desc(), PostVersion.id.desc())).all()
+
+
+def snapshot(s, post, user, now):
+    """Keep a copy of the post's words, unless the newest copy already says the same."""
+    with s.no_autoflush:
+        newest = s.scalar(select(PostVersion).where(PostVersion.post_id == post.id)
+                          .order_by(PostVersion.saved_at.desc(), PostVersion.id.desc()).limit(1))
+        same = newest is not None and (newest.title, newest.summary, newest.body_md) == (
+            post.title, post.summary, post.body_md)
+        if same:
+            return
+        # Keep the newest 30: this new one plus 29 of the old ones.
+        too_old = s.scalars(select(PostVersion.id).where(PostVersion.post_id == post.id)
+                            .order_by(PostVersion.saved_at.desc(), PostVersion.id.desc())
+                            .offset(MAX_VERSIONS - 1)).all()
+    if too_old:
+        s.execute(delete(PostVersion).where(PostVersion.id.in_(too_old)))
+    s.add(PostVersion(post_id=post.id, saved_by_id=user.id, title=post.title, summary=post.summary,
+                      body_md=post.body_md, saved_at=now))
 
 
 # ---------- Lists ----------

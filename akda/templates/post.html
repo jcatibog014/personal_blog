@@ -5,6 +5,9 @@
 {% block page_class %}article-page{% endblock %}
 {% block content %}
   <article class="article">
+    {% if post.cover_image_id %}
+      <img class="article-cover" src="{{ url_for('public.image', image_id=post.cover_image_id) }}" alt="">
+    {% endif %}
     <header class="article-head">
       {% if post.tags %}<p class="kicker"><a href="{{ url_for('public.tag_page', slug=post.tags[0].slug) }}">{{ post.tags[0].name }}</a></p>{% endif %}
       <h1 class="article-title">{{ post.title or 'Untitled Draft' }}</h1>

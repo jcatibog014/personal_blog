@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from .. import comments, db, permissions, posts, render, tags
 from ..dates import utcnow
-from ..models import OWNER, Post, Tag, User
+from ..models import OWNER, Image, Post, Tag, User
 
 bp = Blueprint("public", __name__)
 
@@ -110,6 +110,19 @@ def feed():
     # .xml templates are autoescaped: the HTML goes in as escaped text, as RSS wants.
     xml = render_template("feed.xml", items=items, site=site, feed_url=url_for("public.feed", _external=True))
     return Response(xml, mimetype="application/rss+xml")
+
+
+@bp.get("/images/<int:image_id>")
+def image(image_id):
+    picture = db.session().get(Image, image_id)
+    # The demo's uploads are for demo visitors only, so nobody can use a free
+    # demo account to host pictures on this site's address.
+    if picture is None or (picture.owner.is_demo and not (g.user and g.user.is_demo)):
+        abort(404)
+    response = Response(picture.data, mimetype=picture.mime)
+    # A picture never changes (a new upload is a new address), so browsers can keep it.
+    response.headers["Cache-Control"] = ("private" if picture.owner.is_demo else "public") + ", max-age=31536000, immutable"
+    return response
 
 
 @bp.get("/healthz")
