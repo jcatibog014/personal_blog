@@ -34,7 +34,8 @@ How you get each account:
 **For readers**
 - Read posts on a phone or a very wide screen.
 - Choose light or dark mode in Settings. You don't need an account for this.
-- Find posts by tag, by month or with search. Each post shows related posts.
+- See the latest posts on the home page, and browse by tag at the bottom.
+- Find posts by month or with search. Each post shows related posts.
 - Follow the blog with an RSS feed.
 - Write comments and one level of replies. A new reader's first comment waits for approval.
 
@@ -59,16 +60,37 @@ How you get each account:
 
 ## Pictures
 
+**Reading**
+
 | | |
 |---|---|
 | ![An article](docs/screenshots/article.png) An article | ![Comments under an article](docs/screenshots/comments.png) Comments |
-| ![The editor](docs/screenshots/editor.png) The editor | ![My posts](docs/screenshots/my-posts.png) My posts |
-| ![Comments that wait for approval](docs/screenshots/moderation.png) Approving comments | ![Reported comments in dark mode](docs/screenshots/reports.png) Reports, in dark mode |
-| ![All tags](docs/screenshots/tags.png) Tags | ![The archive](docs/screenshots/archive.png) The archive |
-| ![The login page](docs/screenshots/login.png) Log in | ![The home page in dark mode](docs/screenshots/home-dark.png) Dark mode |
-| ![The Settings page](docs/screenshots/settings.png) Settings | ![The home page on a phone](docs/screenshots/phone.png) On a phone |
+| ![The bottom of the home page, with tags to browse](docs/screenshots/browse-by-tag.png) Browse by tag | ![The search bar, open under the menu](docs/screenshots/search-bar.png) The search bar |
+| ![Search results](docs/screenshots/search.png) Search results | ![All tags](docs/screenshots/tags.png) Tags |
+| ![The archive](docs/screenshots/archive.png) The archive | ![The About page](docs/screenshots/about.png) About |
 
-The small sun, road and book pictures are demo covers. A program draws them (`docs/make_covers.py`).
+**Writing**
+
+| | |
+|---|---|
+| ![The editor](docs/screenshots/editor.png) The editor | ![My posts](docs/screenshots/my-posts.png) My posts |
+| ![Older versions of a post](docs/screenshots/versions.png) Versions | ![Comments that wait for approval](docs/screenshots/moderation.png) Approving comments |
+
+**The owner and accounts**
+
+| | |
+|---|---|
+| ![The People page](docs/screenshots/people.png) People and invites | ![Reported comments in dark mode](docs/screenshots/reports.png) Reports, in dark mode |
+| ![The login page](docs/screenshots/login.png) Log in | ![The sign-up page](docs/screenshots/signup.png) Sign up |
+
+**Settings, dark mode and phones**
+
+| | |
+|---|---|
+| ![The Settings page](docs/screenshots/settings.png) Settings | ![The home page in dark mode](docs/screenshots/home-dark.png) Dark mode |
+| ![The home page on a phone](docs/screenshots/phone.png) On a phone | ![The menu on a phone](docs/screenshots/phone-menu.png) The menu on a phone |
+
+The sun, road and book pictures are demo covers. A program draws them (`docs/make_covers.py`). The people in these pictures are made up.
 
 ## Tools
 

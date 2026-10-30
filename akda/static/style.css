@@ -103,6 +103,7 @@ img { max-width: 100%; height: auto; display: block; }
 .search-toggle-phone { width: var(--control-height); height: var(--control-height); border: 1px solid var(--rule); }
 .search-bar { display: flex; gap: .5rem; padding: .75rem 0; border-bottom: 1px solid var(--ink); }
 .search-bar input { flex: 1; min-width: 0; }
+.search-bar input::-webkit-search-cancel-button { appearance: none; }  /* the browser's own blue X */
 .search-page-form { max-width: 42rem; padding: 0; margin-bottom: 1.5rem; border-bottom: 0; }
 .menu-button {
   height: var(--control-height);
