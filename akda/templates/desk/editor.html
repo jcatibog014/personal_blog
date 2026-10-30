@@ -1,0 +1,74 @@
+{% extends "desk_base.html" %}
+{% from "_macros.html" import csrf, field, textarea %}
+{% block title %}{{ post.title or 'New Post' }} - {{ APP_NAME }}{% endblock %}
+{% block page_class %}editor-page{% endblock %}
+{% block content %}
+  <form method="post" enctype="multipart/form-data" class="editor" data-editor
+        data-preview-url="{{ url_for('desk.preview') }}">
+    {{ csrf() }}
+    <input type="hidden" name="revision" value="{{ post.revision }}" data-revision>
+
+    <div class="editor-bar">
+      <div class="editor-where">
+        <a class="back-link" href="{{ url_for('desk.my_posts') }}">My Posts</a>
+        <span class="editor-status" data-save-status>
+          {% if post.status == 'draft' %}Draft{% else %}Published{% endif %}
+          &middot; Saved {{ post.updated_at|nice_datetime }}
+        </span>
+      </div>
+      <div class="form-actions">
+        <button class="button button-quiet no-js-only" type="submit" name="action" value="preview">Preview</button>
+        {% if post.status == 'draft' %}
+          <button class="button button-quiet" type="submit" name="action" value="save">Save draft</button>
+          <button class="button" type="submit" name="action" value="publish">Publish</button>
+        {% else %}
+          <button class="button" type="submit" name="action" value="update">Update</button>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if errors.stale %}<p class="form-error" role="alert" data-stale-error>{{ errors.stale }}</p>{% endif %}
+    <p class="form-error" role="alert" data-editor-error hidden></p>
+
+    <div class="editor-fields">
+      <div class="editor-title">{{ field('title', 'Title', form.title, errors.title, attrs='maxlength="200"') }}</div>
+      {{ field('summary', 'Summary', form.summary, errors.summary, hint='Optional, shown on cards', attrs='maxlength="300"') }}
+    </div>
+
+    <div class="pane-tabs" data-pane-tabs hidden>
+      <button type="button" class="pane-tab" data-pane-tab="write" aria-pressed="true">Write</button>
+      <button type="button" class="pane-tab" data-pane-tab="preview" aria-pressed="false">Preview</button>
+    </div>
+
+    <div class="editor-panes" data-panes>
+      <div class="editor-pane" data-pane="write">
+        <div class="editor-toolbar" data-toolbar hidden>
+          <button type="button" class="tool-button" data-insert="bold">Bold</button>
+          <button type="button" class="tool-button" data-insert="italic">Italic</button>
+          <button type="button" class="tool-button" data-insert="heading">Heading</button>
+          <button type="button" class="tool-button" data-insert="quote">Quote</button>
+          <button type="button" class="tool-button" data-insert="list">List</button>
+          <button type="button" class="tool-button" data-insert="link">Link</button>
+        </div>
+        {{ textarea('body_md', 'Text', form.body_md, errors.body_md, hint='in Markdown', rows=22, attrs='data-body spellcheck="true"') }}
+      </div>
+      <div class="editor-pane" data-pane="preview">
+        <p class="field-label">Preview</p>
+        <div class="editor-preview article-body" data-preview aria-live="off">{{ preview_html|safe }}</div>
+      </div>
+    </div>
+  </form>
+
+  <section class="editor-danger" aria-label="Remove this post">
+    {% if post.status == 'published' %}
+      <form method="post" action="{{ url_for('desk.unpublish_post', post_id=post.id) }}">
+        {{ csrf() }}
+        <button class="button button-quiet" type="submit">Unpublish</button>
+      </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('desk.delete_post', post_id=post.id) }}" data-confirm="Delete this post and its comments? This can't be undone.">
+      {{ csrf() }}
+      <button class="button button-danger" type="submit">Delete post</button>
+    </form>
+  </section>
+{% endblock %}

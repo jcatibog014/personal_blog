@@ -1,0 +1,39 @@
+{# Post cards and page numbers. Home, tags, search and archive all use these. #}
+
+{% macro byline(post) %}
+  <p class="byline">{{ post.author.display_name }} &middot; {{ post.published_at|nice_date }} &middot; {{ post.reading_minutes }} min read</p>
+{% endmacro %}
+
+{% macro featured_post(post) %}
+  <article class="featured">
+    <div class="featured-text">
+      <h1 class="featured-title"><a href="{{ url_for('public.show_post', slug=post.slug) }}">{{ post.title }}</a></h1>
+      {% if post.excerpt %}<p class="featured-summary">{{ post.excerpt }}</p>{% endif %}
+      {{ byline(post) }}
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro post_card(post) %}
+  <article class="post-card">
+    <h2><a href="{{ url_for('public.show_post', slug=post.slug) }}">{{ post.title }}</a></h2>
+    {% if post.excerpt %}<p class="post-card-summary">{{ post.excerpt }}</p>{% endif %}
+    <p class="byline">{{ post.published_at|nice_date }} &middot; {{ post.reading_minutes }} min read</p>
+  </article>
+{% endmacro %}
+
+{% macro post_grid(items) %}
+  <div class="post-grid">
+    {% for post in items %}{{ post_card(post) }}{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro pagination(page, pages, endpoint) %}
+  {% if pages > 1 %}
+    <nav class="pagination" aria-label="Pages">
+      {% if page > 1 %}<a class="button button-quiet" rel="prev" href="{{ url_for(endpoint, page=page - 1, **kwargs) }}">Newer</a>{% endif %}
+      <span class="pagination-where">Page {{ page }} of {{ pages }}</span>
+      {% if page < pages %}<a class="button button-quiet" rel="next" href="{{ url_for(endpoint, page=page + 1, **kwargs) }}">Older</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endmacro %}

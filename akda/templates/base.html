@@ -28,6 +28,7 @@
       </ul>
       <div class="nav-tools">
         {% if g.user %}
+          {% if can.can_write(g.user) %}<a href="{{ url_for('desk.my_posts') }}">The Desk</a>{% endif %}
           <a class="nav-user" href="{{ url_for('auth.settings') }}">{{ g.user.display_name }}</a>
           <form method="post" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -43,15 +44,14 @@
   </header>
   {% endblock %}
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="flashes" role="status">
-        {% for message in messages %}<p class="flash">{{ message }}</p>{% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-
   <main id="main" class="page {% block page_class %}{% endblock %}">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flashes" role="status">
+          {% for message in messages %}<p class="flash">{{ message }}</p>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
   </main>
 

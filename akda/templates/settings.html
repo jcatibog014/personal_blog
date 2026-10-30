@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "desk_base.html" if can.can_write(g.user) else "base.html" %}
 {% from "_macros.html" import csrf, field %}
 {% block title %}Settings - {{ APP_NAME }}{% endblock %}
 {% block content %}

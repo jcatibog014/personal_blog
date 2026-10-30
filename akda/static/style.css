@@ -226,6 +226,136 @@ img { max-width: 100%; height: auto; display: block; }
   .welcome-line { margin-top: 1.5rem; }
 }
 
+/* ---------- Home and post cards ---------- */
+
+.byline { color: var(--ink-soft); font-size: .88rem; margin: 0; }
+
+.featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+  padding-bottom: 2.5rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--ink);
+}
+.featured-title { font-size: clamp(2.5rem, 5.5vw, 5rem); line-height: 1.05; margin-bottom: .4em; max-width: 22em; }
+.featured-title a, .post-card h2 a { text-decoration: none; }
+.featured-title a:hover, .post-card h2 a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.featured-summary { font-family: var(--reading); font-size: clamp(1.15rem, 1.6vw, 1.4rem); max-width: 40em; }
+
+.post-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 2.5rem 2rem; }
+.post-card { display: flex; flex-direction: column; border-top: 1px solid var(--rule); padding-top: 1rem; }
+.post-card h2 { font-size: 1.45rem; margin-bottom: .5rem; }
+.post-card-summary { font-family: var(--reading); font-size: 1.02rem; margin-bottom: .75rem; }
+.post-card .byline { margin-top: auto; }
+
+.pagination { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 3rem; }
+.pagination-where { color: var(--ink-soft); }
+
+/* ---------- The article ---------- */
+
+.article-head { max-width: 46rem; margin: 1rem auto 2rem; text-align: center; }
+.article-title { font-size: clamp(2.25rem, 5vw, 4rem); line-height: 1.08; }
+.article-layout { display: grid; grid-template-columns: minmax(0, 42rem); justify-content: center; gap: 3rem; }
+.article-body { font-family: var(--reading); font-size: 1.18rem; line-height: 1.7; }
+.article-body > :first-child { margin-top: 0; }
+.article-body h1, .article-body h2, .article-body h3, .article-body h4 { margin: 1.6em 0 .5em; }
+.article-body h1 { font-size: 1.9rem; }
+.article-body h2 { font-size: 1.6rem; }
+.article-body h3 { font-size: 1.3rem; }
+.article-body h4 { font-size: 1.1rem; }
+.article-body p, .article-body ul, .article-body ol, .article-body pre, .article-body table, .article-body blockquote { margin: 0 0 1.1em; }
+.article-body blockquote { padding-left: 1.2rem; border-left: 3px solid var(--accent); font-style: italic; }
+.article-body pre { padding: 1rem; overflow-x: auto; background: var(--flash); font-size: .9em; line-height: 1.5; }
+.article-body code { font-family: Consolas, Menlo, monospace; font-size: .88em; }
+.article-body img { margin: 1.5em auto; }
+.article-body table { width: 100%; border-collapse: collapse; display: block; overflow-x: auto; }
+.article-body th, .article-body td { padding: .4rem .7rem; border-bottom: 1px solid var(--rule); text-align: left; }
+.article-body hr { border: 0; border-top: 1px solid var(--rule); margin: 2em 0; }
+.notice { display: inline-block; margin: 1rem 0 0; padding: .4rem .8rem; background: var(--flash); border-left: 3px solid var(--accent); }
+.post-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 1.25rem; }
+.post-tools form { margin: 0; }
+
+/* ---------- The Desk ---------- */
+
+.page-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.page-head h1 { margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0; }
+.back-link { font-size: .95rem; }
+.tabs { display: flex; flex-wrap: wrap; gap: .25rem 1.75rem; border-bottom: 1px solid var(--ink); margin-bottom: 1.5rem; }
+.tabs a { padding: .5rem 0; text-decoration: none; color: var(--ink-soft); }
+.tabs a:hover { color: var(--accent); }
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 600; box-shadow: inset 0 -3px 0 var(--accent); }
+
+.post-rows { list-style: none; margin: 0; padding: 0; }
+.post-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem 2rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+.post-row h2 { font-size: 1.25rem; margin: 0 0 .15rem; }
+.post-row h2 a { text-decoration: none; }
+.post-row h2 a:hover { text-decoration: underline; }
+.post-row-actions { display: flex; gap: .5rem; }
+
+@media (min-width: 56rem) {
+  .desk-layout { flex-direction: row; align-items: stretch; }
+  .sidebar { position: sticky; top: 0; align-self: flex-start; flex: 0 0 15.5rem; height: 100vh; display: flex; flex-direction: column; border-right: 1px solid var(--ink); padding: 1.5rem; }
+  .sidebar-menu { flex: 1; display: flex; flex-direction: column; justify-content: space-between; margin-top: 1.5rem; }
+  .desk-layout .page { min-width: 0; margin: 0; max-width: none; }
+  .desk-layout .wordmark { font-size: 2.5rem; }
+  .sidebar .menu-button { display: none !important; }
+}
+@media (max-width: 55.99rem) {
+  .sidebar { padding: .75rem clamp(1rem, 4vw, 3rem); border-bottom: 3px double var(--ink); }
+  .sidebar-top { display: flex; justify-content: space-between; align-items: center; }
+  .sidebar .wordmark { font-size: 2rem; }
+  .sidebar .menu-button { position: static; display: inline-block; }
+  .js .sidebar-menu { display: none; padding-top: 1rem; }
+  .js .sidebar-menu.is-open { display: block; }
+  .sidebar-foot { margin-top: 1rem; }
+}
+.sidebar-label { font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 .5rem; }
+.desk-links { list-style: none; margin: 0; padding: 0; }
+.desk-links a { display: block; padding: .45rem 0 .45rem .75rem; text-decoration: none; border-left: 3px solid transparent; }
+.desk-links a:hover { color: var(--accent); }
+.desk-links a[aria-current="page"] { border-left-color: var(--accent); font-weight: 600; }
+.sidebar-foot { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; font-size: .95rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+.sidebar-foot form { margin: 0; }
+.sidebar-user { font-weight: 600; margin: 0; }
+
+/* ---------- The editor ---------- */
+
+.editor-bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem 2rem; padding: .75rem 0; margin-bottom: 1rem; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.editor-where { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1.25rem; }
+.editor-status { color: var(--ink-soft); font-size: .9rem; }
+.editor-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-bottom: 1rem; }
+.editor-title input { font-family: var(--headline); font-size: 1.6rem; font-weight: 700; }
+.editor-panes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.editor-pane { min-width: 0; display: flex; flex-direction: column; gap: .3rem; }
+.editor-pane .field { flex: 1; }
+.editor-pane textarea { flex: 1; min-height: 28rem; font-family: Consolas, Menlo, monospace; font-size: .95rem; line-height: 1.55; }
+.editor-preview { flex: 1; min-height: 28rem; padding: .75rem 1rem; background: var(--surface); border: 1px solid var(--rule); overflow-y: auto; font-size: 1.05rem; }
+.editor-pane > .field-label { margin: 0; }
+.editor-toolbar { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .3rem; }
+.tool-button { min-height: 2rem; padding: 0 .6rem; background: transparent; color: var(--ink); border: 1px solid var(--rule); font: inherit; font-size: .85rem; cursor: pointer; }
+.tool-button:hover { border-color: var(--accent); color: var(--accent); }
+.pane-tabs { display: flex; gap: 1.25rem; margin-bottom: .75rem; }
+.pane-tab { padding: .4rem 0; background: none; border: 0; color: var(--ink-soft); font: inherit; cursor: pointer; }
+.pane-tab[aria-pressed="true"] { color: var(--ink); font-weight: 600; box-shadow: inset 0 -3px 0 var(--accent); }
+.editor-danger { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+.editor-danger form { margin: 0; }
+.js .no-js-only { display: none; }
+
+/* Container-free on purpose: the sidebar takes 15.5rem, so split from 75rem up. */
+@media (min-width: 75rem) {
+  .pane-tabs { display: none; }
+  .editor-panes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .editor-pane > .field-label { line-height: 2rem; }
+  .editor-fields { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; }
+}
+@media (max-width: 74.99rem) {
+  .js .editor-panes[data-showing="write"] [data-pane="preview"],
+  .js .editor-panes[data-showing="preview"] [data-pane="write"] { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

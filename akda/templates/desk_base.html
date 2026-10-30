@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block body_class %}desk-layout{% endblock %}
+{% block header %}
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <a class="wordmark" href="{{ url_for('desk.my_posts') }}">Akda</a>
+      <button class="menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="desk-nav" hidden>
+        <span aria-hidden="true">&#9776;</span> Menu
+      </button>
+    </div>
+    <div class="sidebar-menu" id="desk-nav">
+      <nav aria-label="The Desk">
+        <p class="sidebar-label">The Desk</p>
+        <ul class="desk-links">
+          {% set page = request.endpoint %}
+          <li><a href="{{ url_for('desk.my_posts') }}"{% if page in ('desk.my_posts', 'desk.edit_post') %} aria-current="page"{% endif %}>My Posts</a></li>
+          <li><a href="{{ url_for('auth.settings') }}"{% if page == 'auth.settings' %} aria-current="page"{% endif %}>Settings</a></li>
+          <li><a href="{{ url_for('public.home') }}">View Site</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-foot">
+        <p class="sidebar-user">{{ g.user.display_name }}</p>
+        <button class="link-button" type="button" data-theme-toggle hidden>Dark mode</button>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="link-button" type="submit">Log out</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+{% endblock %}
+{% block footer %}{% endblock %}

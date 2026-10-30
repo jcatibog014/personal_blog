@@ -1,0 +1,43 @@
+{% extends "desk_base.html" %}
+{% block title %}My Posts - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <h1>My Posts</h1>
+    <form method="post" action="{{ url_for('desk.new_post') }}" class="actions">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button" type="submit">New post</button>
+    </form>
+  </div>
+
+  <nav class="tabs" aria-label="Filter posts">
+    {% for name, label in tabs.items() %}
+      <a href="{{ url_for('desk.my_posts', tab=name) }}"{% if name == tab %} aria-current="page"{% endif %}>{{ label }} ({{ groups[name]|length }})</a>
+    {% endfor %}
+  </nav>
+
+  {% if shown %}
+    <ul class="post-rows">
+      {% for post in shown %}
+        <li class="post-row">
+          <div class="post-row-text">
+            <h2><a href="{{ url_for('desk.edit_post', post_id=post.id) }}">{{ post.title or 'Untitled Draft' }}</a></h2>
+            <p class="byline">
+              {% if tab == 'drafts' %}Last saved {{ post.updated_at|nice_datetime }}
+              {% elif tab == 'scheduled' %}Goes live {{ post.published_at|nice_datetime }}
+              {% else %}Published {{ post.published_at|nice_date }}{% endif %}
+            </p>
+          </div>
+          <div class="post-row-actions">
+            {% if post.slug and tab != 'drafts' %}<a class="button button-quiet" href="{{ url_for('public.show_post', slug=post.slug) }}">View</a>{% endif %}
+            <a class="button button-quiet" href="{{ url_for('desk.edit_post', post_id=post.id) }}">Edit</a>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state">
+      <h2>No {{ tabs[tab] }} Posts</h2>
+      <p>{% if tab == 'drafts' %}Press "New post" to start writing.{% else %}Nothing here yet.{% endif %}</p>
+    </div>
+  {% endif %}
+{% endblock %}

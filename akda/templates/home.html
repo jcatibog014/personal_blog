@@ -1,7 +1,14 @@
 {% extends "base.html" %}
+{% from "_cards.html" import featured_post, post_grid, pagination %}
 {% block content %}
-  <div class="empty-state">
-    <h1>Nothing Published Yet</h1>
-    <p>The first story is still being written. Please come back soon.</p>
-  </div>
+  {% if featured or grid %}
+    {% if featured %}{{ featured_post(featured) }}{% endif %}
+    {{ post_grid(grid) }}
+    {{ pagination(page, pages, 'public.home') }}
+  {% else %}
+    <div class="empty-state">
+      <h1>Nothing Published Yet</h1>
+      <p>The first story is still being written. Please come back soon.</p>
+    </div>
+  {% endif %}
 {% endblock %}

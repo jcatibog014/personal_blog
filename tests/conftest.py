@@ -1,10 +1,13 @@
 import os
+from datetime import timedelta
 
 import pytest
 from sqlalchemy import select
+from sqlalchemy.orm import undefer
 
-from akda import auth, create_app, db
-from akda.models import AUTHOR, OWNER, READER, User
+from akda import auth, create_app, db, posts
+from akda.dates import utcnow
+from akda.models import AUTHOR, OWNER, PUBLISHED, READER, Post, User
 
 # Tests use a fresh SQLite file per test. To check everything on PostgreSQL
 # too, set TEST_DATABASE_URL to an EMPTY Neon branch (its tables are dropped
@@ -79,6 +82,36 @@ def log_in_as(client, user_id):
 def get_user(app, username):
     with app.app_context():
         return db.session().scalar(select(User).where(User.username == username))
+
+
+HOUR = timedelta(hours=1)
+
+
+def add_post(app, author_id, title="A Post", body="Some text.", status=PUBLISHED, published_at=None, **fields):
+    """Put a post straight into the database. Published an hour ago unless told
+    otherwise. Returns the id."""
+    with app.app_context():
+        s = db.session()
+        post = Post(author_id=author_id, **fields)
+        posts.apply_content(post, {"title": title, "summary": "", "body_md": body}, utcnow())
+        if status == PUBLISHED:
+            posts.publish(s, post, published_at or utcnow() - HOUR)
+        s.add(post)
+        s.commit()
+        return post.id
+
+
+def get_post(app, post_id):
+    with app.app_context():
+        return db.session().scalar(
+            select(Post).where(Post.id == post_id).options(undefer(Post.body_md), undefer(Post.body_html)))
+
+
+def edit_form(post_id, app, **fields):
+    """What the editor sends, with the right revision."""
+    post = get_post(app, post_id)
+    return {"revision": post.revision, "title": post.title, "summary": post.summary,
+            "body_md": post.body_md, "action": "save", **fields}
 
 
 @pytest.fixture

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} - {{ APP_NAME }}{% endblock %}
+{% block meta %}<meta name="description" content="{{ post.excerpt }}">{% endblock %}
+{% block page_class %}article-page{% endblock %}
+{% block content %}
+  <article class="article">
+    <header class="article-head">
+      <h1 class="article-title">{{ post.title or 'Untitled Draft' }}</h1>
+      {% if post.published_at %}
+        <p class="byline">{{ post.author.display_name }} &middot; {{ post.published_at|nice_date }} &middot; {{ post.reading_minutes }} min read</p>
+      {% else %}
+        <p class="byline">{{ post.author.display_name }} &middot; {{ post.reading_minutes }} min read</p>
+      {% endif %}
+      {% if not is_live %}<p class="notice">Only you can see this. It isn't public yet.</p>{% endif %}
+      {% include "_post_tools.html" %}
+    </header>
+    <div class="article-layout">
+      <div class="article-body">{{ post.body_html|safe }}</div>
+    </div>
+  </article>
+{% endblock %}

@@ -141,7 +141,7 @@ def log_in(user):
 
 
 def after_login_page(user):
-    return url_for("public.home")
+    return url_for("desk.my_posts") if permissions.can_write(user) else url_for("public.home")
 
 
 # ---------- Every request ----------
