@@ -75,7 +75,7 @@
           <p>You don't need an account to read. Log in or sign up to join the conversation.</p>
         {% endif %}
       </div>
-      <div class="form-actions">
+      <div class="form-actions setting-account-actions">
         {% if g.user %}
           <form method="post" action="{{ url_for('auth.logout') }}">
             {{ csrf() }}

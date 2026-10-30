@@ -37,8 +37,8 @@
           </div>
           <div class="queue-actions">
             {% if tab == 'waiting' %}
-              {{ action('discussion.reject_comment', comment, 'Reject') }}
-              {{ action('discussion.approve_comment', comment, 'Approve', 'button-primary') }}
+              {{ action('discussion.reject_comment', comment, 'Reject', 'button-danger') }}
+              {{ action('discussion.approve_comment', comment, 'Approve', 'button-positive') }}
             {% elif tab == 'reported' %}
               {{ action('discussion.dismiss_reports', comment, 'Keep comment') }}
               {{ action('discussion.delete_comment', comment, 'Remove', 'button-danger', 'Remove this comment?') }}

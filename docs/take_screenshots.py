@@ -37,6 +37,7 @@ PAGES = [
     ("article.png", "{post}", "light", DESKTOP),
     ("comments.png", "{post}#comments", "light", DESKTOP),
     ("my-posts.png", "/desk/?tab=published", "light", DESKTOP),
+    ("my-posts-phone.png", "/desk/?tab=published", "light", PHONE),
     ("moderation.png", "/desk/comments", "light", DESKTOP),
     ("reports.png", "/desk/comments?tab=reported", "dark", DESKTOP),
     ("tags.png", "/tags", "light", DESKTOP),
@@ -101,6 +102,10 @@ def shoot_page_parts(page):
     page.locator(".search-toggle-wide").click()
     page.keyboard.type("notebook")
     save(page, "search-bar.png")
+
+    page.goto(f"{BASE}/desk/?tab=published")
+    page.locator(".user-menu summary").click()
+    save(page, "user-menu.png")
 
 
 def shoot_editor_and_versions(page):

@@ -23,7 +23,20 @@
         </ul>
       </nav>
       <div class="sidebar-foot">
-        <p class="sidebar-user">{{ g.user.display_name }}</p>
+        {# <details> opens and closes without JavaScript. app.js also closes it on an outside click. #}
+        <details class="user-menu" data-user-menu>
+          <summary>
+            <span class="avatar" aria-hidden="true">{{ g.user.display_name[:1]|upper }}</span>
+            <span class="user-menu-name"><span class="visually-hidden">Account menu for </span>{{ g.user.display_name }}</span>
+          </summary>
+          <div class="user-menu-items">
+            <a href="{{ url_for('auth.settings') }}">Settings</a>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="link-button" type="submit">Log out</button>
+            </form>
+          </div>
+        </details>
       </div>
     </div>
   </aside>

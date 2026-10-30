@@ -75,6 +75,7 @@ How you get each account:
 |---|---|
 | ![The editor](docs/screenshots/editor.png) The editor | ![My posts](docs/screenshots/my-posts.png) My posts |
 | ![Older versions of a post](docs/screenshots/versions.png) Versions | ![Comments that wait for approval](docs/screenshots/moderation.png) Approving comments |
+| ![The account menu at the bottom of the sidebar](docs/screenshots/user-menu.png) The account menu | ![My posts on a phone](docs/screenshots/my-posts-phone.png) My posts on a phone |
 
 **The owner and accounts**
 
