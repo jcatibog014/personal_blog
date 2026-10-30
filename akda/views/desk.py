@@ -102,6 +102,7 @@ def show_editor(post, form, errors=None, status=200, restored_from=None):
         "desk/editor.html", post=post, form=form, errors=errors or {}, restored_from=restored_from,
         preview_html=render.to_html(form["body_md"]), is_scheduled=posts.is_scheduled(post, now),
         is_live=permissions.is_live(post, now), version_count=len(post.versions),
+        words_per_minute=posts.WORDS_PER_MINUTE,
     ), status
 
 

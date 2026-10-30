@@ -253,6 +253,63 @@ function setUpScheduleLabel(form) {
   label();
 }
 
+// The same sum as posts.reading_minutes() on the server, so it matches the published post.
+function setUpWordCount(form, body) {
+  const label = form.querySelector("[data-word-count]");
+  const perMinute = Number(label.dataset.wordsPerMinute);
+  const show = () => {
+    const text = body.value.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const minutes = Math.max(1, Math.ceil(words / perMinute));
+    label.textContent = `${words} ${words === 1 ? "word" : "words"} · ${minutes} min read`;
+  };
+  body.addEventListener("input", show);
+  show();
+}
+
+function setUpShortcuts(form) {
+  const key = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+";
+  const saver = form.querySelector('[data-shortcut~="save"]');
+  const publisher = form.querySelector('[data-shortcut~="publish"]');
+  const hint = form.querySelector("[data-key-hint]");
+  const VERBS = { Publish: "publishes", Schedule: "schedules", Update: "updates" };
+  const showHint = () => {
+    const parts = [`${key}Enter ${VERBS[publisher.textContent.trim()]}`];
+    if (saver) parts.unshift(`${key}S saves`);
+    hint.textContent = parts.join(" · ");
+    hint.hidden = false;
+  };
+  showHint();
+
+  let liveNote = "";
+  let sending = false;
+  form.addEventListener("submit", () => { sending = true; });
+  form.addEventListener("input", (event) => {
+    if (event.target.matches("[data-publish-at]")) showHint();
+    if (liveNote) {
+      showEditorError(form, "");
+      liveNote = "";
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.repeat) return;
+    const isSave = event.key.toLowerCase() === "s";
+    if (!isSave && event.key !== "Enter") return;
+    event.preventDefault();  // no "save this web page" dialog
+    if (sending) return;  // a second press would be refused as out of date
+    if (isSave && !saver) {
+      liveNote = `This post is live, so ${key}S doesn't change it. Press Update when it's ready for readers.`;
+      showEditorError(form, liveNote);
+      return;
+    }
+    const button = isSave ? saver : publisher;
+    // A key can be pressed by accident, and this one puts words in front of readers.
+    if (!isSave && "shortcutConfirm" in button.dataset
+        && !confirm(`${button.textContent.trim()} this post now?`)) return;
+    form.requestSubmit(button);
+  });
+}
+
 function setUpEditor() {
   const form = document.querySelector("[data-editor]");
   if (!form) return;
@@ -269,6 +326,8 @@ function setUpEditor() {
   setUpAutosave(form);
   setUpLeaveWarning(form);
   setUpScheduleLabel(form);
+  setUpWordCount(form, body);
+  setUpShortcuts(form);
 }
 
 setUpTheme();

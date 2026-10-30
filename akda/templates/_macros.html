@@ -21,6 +21,14 @@
   </svg>
 {% endmacro %}
 
+{% macro rss_icon() %}
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+    <circle cx="6" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+    <path d="M4 11a9 9 0 0 1 9 9"></path>
+    <path d="M4 4a16 16 0 0 1 16 16"></path>
+  </svg>
+{% endmacro %}
+
 {% macro search_form(words='', id=None, hidden=False, class='') %}
   <form class="search-bar {{ class }}" method="get" action="{{ url_for('public.search') }}" role="search"
         {% if id %}id="{{ id }}"{% endif %} {% if hidden %}hidden{% endif %}>

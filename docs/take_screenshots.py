@@ -113,6 +113,8 @@ def shoot_editor_and_versions(page):
     page.goto(f"{BASE}/desk/?tab=drafts")
     page.locator(".post-row h2 a").first.click()
     save(page, "editor.png")
+    page.locator(".editor-details summary").click()
+    save(page, "editor-details.png")
     body = page.locator("[data-body]")
     extra = "One more idea: write less, and keep more of it."
     if extra not in body.input_value():  # the demo keeps it for an hour, if this runs twice
@@ -121,6 +123,12 @@ def shoot_editor_and_versions(page):
     page.wait_for_load_state("networkidle")
     page.get_by_role("link", name="Versions").click()
     save(page, "versions.png")
+
+
+def shoot_dark_editor(page):
+    page.goto(f"{BASE}/desk/?tab=drafts")
+    page.locator(".post-row h2 a").first.click()
+    save(page, "editor-dark.png")
 
 
 def shoot_phone_menu(page):
@@ -151,6 +159,7 @@ def main():
         desktop = pages[("light", DESKTOP["width"])]
         shoot_page_parts(desktop)
         shoot_editor_and_versions(desktop)
+        shoot_dark_editor(pages[("dark", DESKTOP["width"])])
         shoot_phone_menu(pages[("light", PHONE["width"])])
         browser.close()
 
