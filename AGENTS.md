@@ -15,7 +15,7 @@ Python 3.13 is at `%LOCALAPPDATA%\Programs\Python\Python313\python.exe`. Use the
 - Run: `.venv\Scripts\flask --app akda run --debug --port 5005`, then open http://127.0.0.1:5005. (Ports: Swap Meter 5000, Ambon Alert 5001, Ang Gastos! 5002, Sangkap 5003, Gawi 5004.)
 - Test: `.venv\Scripts\python -m pytest`. Every test gets a fresh SQLite file and never uses the internet. Set `TEST_DATABASE_URL` to an **empty** Neon branch to run the same tests on PostgreSQL (each test drops and remakes the tables). SQLAlchemy warnings fail the tests (`pytest.ini`).
 - Other commands: `set-password <name>`, `reset-demo`.
-- Screenshots: `docs/take_screenshots.py` (Playwright + Edge, as the demo). Demo covers: `docs/make_covers.py`.
+- Screenshots: `docs/make_practice_data.py`, then `docs/take_screenshots.py` (Playwright + Edge; its top comment has the steps). Demo covers: `docs/make_covers.py`.
 
 ## Architecture
 
@@ -52,5 +52,5 @@ Python 3.13 is at `%LOCALAPPDATA%\Programs\Python\Python313\python.exe`. Use the
 - **Tags, Archive and About stay in the main menu.** Readers must never need Settings to find posts, and Settings only holds real settings.
 - **Search is a magnifying glass, not a box in the menu:** a link to `/search` that `setUpSearch()` in `app.js` turns into a button opening the `#site-search` bar under the menu (Escape closes it). The `/search` page has its own form.
 - The home page is the featured post, then Latest Posts (Older Posts from page 2), then Browse by Tag (`tags.with_counts(limit=)`, all the same size for neatness).
-- **README screenshots** live in `docs/screenshots/` and are taken as the demo. Retake a screenshot whenever its page changes visibly.
+- **Every PR must keep the README's pictures up to date (the owner's standing rule).** Screenshots live in `docs/screenshots/` and every one is shown in the README. If a PR visibly changes a page, retake its pictures; if it adds a page or feature, add a picture to `docs/take_screenshots.py` and the README. `tests/test_readme.py` fails if they disagree. Take them on a practice database (`docs/make_practice_data.py`), never with real people or posts. In a PR description, link pictures with a full `raw.githubusercontent.com` address, because relative paths don't work there.
 - Commit messages and PR bodies go through files (`git commit -F`, `gh pr create --body-file`): PowerShell 5.1 breaks quotes in arguments.

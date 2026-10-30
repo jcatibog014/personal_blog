@@ -1,12 +1,19 @@
 """Take the README screenshots (docs/screenshots/*.png).
 
-It logs in with "Try Demo", so only sample posts show. It uses Microsoft
-Edge, which Windows already has, through Playwright. Playwright is only a tool
-for this script, so it is not in requirements.txt:
+Retake them in every pull request that visibly changes a page, and add a new
+one when a page or feature is added: the README shows everything the site can
+do. tests/test_readme.py fails if the pictures and the README disagree.
+
+It uses a practice database with made-up people, so no real person or post can
+show. Most pictures use "Try Demo". It uses Microsoft Edge, which Windows already
+has, through Playwright. Playwright is only a tool for this script, so it is not
+in requirements.txt:
 
     .venv\\Scripts\\python -m pip install playwright
-    .venv\\Scripts\\flask --app akda run --port 5005      (in another terminal)
-    .venv\\Scripts\\python docs\\take_screenshots.py
+    $env:DATABASE_URL = "sqlite:///C:/Temp/akda-screenshots.sqlite"
+    .venv\\Scripts\\python docs\\make_practice_data.py
+    .venv\\Scripts\\flask --app akda run --port 5005      (keep this one running)
+    .venv\\Scripts\\python docs\\take_screenshots.py      (in another terminal)
 
 Every picture is one screen (no full-page shots), so they are all the same
 size and the README table stays short and even.
@@ -21,6 +28,7 @@ BASE = "http://127.0.0.1:5005"
 OUT = Path(__file__).parent / "screenshots"
 DESKTOP = {"width": 1280, "height": 800}
 PHONE = {"width": 390, "height": 844}
+OWNER, OWNER_PASSWORD = "juan", "practice password"  # from make_practice_data.py
 
 # (file name, address, theme, screen size). {post} is the demo's newest post.
 PAGES = [
@@ -33,6 +41,7 @@ PAGES = [
     ("reports.png", "/desk/comments?tab=reported", "dark", DESKTOP),
     ("tags.png", "/tags", "light", DESKTOP),
     ("archive.png", "/archive", "light", DESKTOP),
+    ("search.png", "/search?q=notebook", "light", DESKTOP),
     ("settings.png", "/settings", "light", DESKTOP),
     ("phone.png", "/", "light", PHONE),
 ]
@@ -46,25 +55,81 @@ def demo_page(browser, theme, size):
     return page
 
 
-def shoot(page, name, path):
-    page.goto(f"{BASE}{path}")
+def save(page, name):
     page.wait_for_load_state("networkidle")  # fonts and pictures are in
     page.wait_for_timeout(300)
     page.screenshot(path=OUT / name)
     print("saved", name)
 
 
+def shoot(page, name, path):
+    page.goto(f"{BASE}{path}")
+    save(page, name)
+
+
+def shoot_visitor_pages(browser):
+    page = browser.new_page(viewport=DESKTOP, color_scheme="light")
+    shoot(page, "login.png", "/login")
+    shoot(page, "signup.png", "/signup")
+    shoot(page, "about.png", "/about")
+    page.close()
+
+
+def shoot_people_page(browser):
+    """As the practice owner, with one invite waiting."""
+    page = browser.new_page(viewport=DESKTOP, color_scheme="light")
+    page.goto(f"{BASE}/login")
+    page.get_by_label("Username").fill(OWNER)
+    page.get_by_label("Password").fill(OWNER_PASSWORD)
+    page.get_by_role("button", name="Log in", exact=True).click()
+    page.wait_for_url("**/desk/**")
+    page.goto(f"{BASE}/desk/people")
+    if page.get_by_role("button", name="Cancel invite").count() == 0:
+        page.get_by_role("button", name="Invite an author").click()
+    shoot(page, "people.png", "/desk/people")  # opened again, so the secret link is gone
+    page.close()
+
+
+def shoot_page_parts(page):
+    """Things that need a scroll or a click first."""
+    page.goto(f"{BASE}/")
+    # Start at the heading, so the picture shows Latest Posts down to Browse by Tag.
+    page.evaluate("document.querySelector('.section-title').scrollIntoView(); window.scrollBy(0, -16)")
+    save(page, "browse-by-tag.png")
+
+    page.goto(f"{BASE}/")
+    page.locator(".search-toggle-wide").click()
+    page.keyboard.type("notebook")
+    save(page, "search-bar.png")
+
+
+def shoot_editor_and_versions(page):
+    """Open the demo's draft, then save it once more so there are two versions."""
+    page.goto(f"{BASE}/desk/?tab=drafts")
+    page.locator(".post-row h2 a").first.click()
+    save(page, "editor.png")
+    body = page.locator("[data-body]")
+    extra = "The tests broke next, and they were right."
+    if extra not in body.input_value():  # the demo keeps it for an hour, if this runs twice
+        body.fill(f"{body.input_value()}\n\n{extra}")
+    page.get_by_role("button", name="Save draft").click()
+    page.wait_for_load_state("networkidle")
+    page.get_by_role("link", name="Versions").click()
+    save(page, "versions.png")
+
+
+def shoot_phone_menu(page):
+    page.goto(f"{BASE}/")
+    page.get_by_role("button", name="Menu").click()
+    save(page, "phone-menu.png")
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel="msedge")
-
-        page = browser.new_page(viewport=DESKTOP, color_scheme="light")
-        page.goto(f"{BASE}/login")
-        page.wait_for_load_state("networkidle")
-        page.screenshot(path=OUT / "login.png")
-        page.close()
-        print("saved login.png")
+        shoot_visitor_pages(browser)
+        shoot_people_page(browser)
 
         pages = {}
         for name, path, theme, size in PAGES:
@@ -78,13 +143,10 @@ def main():
                 path = path.replace("{post}", link)
             shoot(page, name, path)
 
-        # The editor: open the demo's draft.
-        page = pages[("light", DESKTOP["width"])]
-        page.goto(f"{BASE}/desk/?tab=drafts")
-        page.locator(".post-row h2 a").first.click()
-        page.wait_for_load_state("networkidle")
-        page.screenshot(path=OUT / "editor.png")
-        print("saved editor.png")
+        desktop = pages[("light", DESKTOP["width"])]
+        shoot_page_parts(desktop)
+        shoot_editor_and_versions(desktop)
+        shoot_phone_menu(pages[("light", PHONE["width"])])
         browser.close()
 
 
