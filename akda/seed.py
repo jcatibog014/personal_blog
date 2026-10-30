@@ -12,7 +12,7 @@ from pathlib import Path
 from PIL import Image as PillowImage
 from sqlalchemy import select
 
-from . import auth, posts, tags
+from . import auth, images, posts, tags
 from .models import APPROVED, PENDING, READER, Comment, CommentReport, Image, Post, User
 
 COVERS = Path(__file__).parent / "seed_covers"
@@ -113,7 +113,8 @@ def _cover(s, owner, name):
     with PillowImage.open(path) as picture:
         width, height = picture.size
     data = path.read_bytes()
-    image = Image(owner_id=owner.id, data=data, mime="image/webp", width=width, height=height, size=len(data))
+    image = Image(owner_id=owner.id, data=data, thumb=images.make_thumb(data), mime="image/webp",
+                  width=width, height=height, size=len(data))
     s.add(image)
     return image
 

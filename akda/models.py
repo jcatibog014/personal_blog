@@ -75,6 +75,8 @@ class Image(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     data: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)  # deferred: only the picture's own address loads it
+    # A tiny square for lists like the Archive. Empty for pictures uploaded before it existed.
+    thumb: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True)
     mime: Mapped[str] = mapped_column(String(30))
     width: Mapped[int]
     height: Mapped[int]

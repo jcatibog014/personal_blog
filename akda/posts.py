@@ -250,7 +250,7 @@ def related(s, post, viewer, now, limit=3):
 def archive(s, viewer, now):
     """[{"year", "month", "name", "posts"}], newest month first. Grouped here, not in
     SQL, because a month is a Philippine-time month and the database holds UTC."""
-    rows = s.execute(newest_first(select(Post.title, Post.slug, Post.published_at)
+    rows = s.execute(newest_first(select(Post.title, Post.slug, Post.published_at, Post.cover_image_id)
                                   .where(visible_filter(viewer, now)))).all()
     months = []
     for row in rows:

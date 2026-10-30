@@ -115,17 +115,33 @@ def feed():
     return Response(xml, mimetype="application/rss+xml")
 
 
-@bp.get("/images/<int:image_id>")
-def image(image_id):
+def visible_picture(image_id):
     picture = db.session().get(Image, image_id)
     # The demo's uploads are for demo visitors only, so nobody can use a free
     # demo account to host pictures on this site's address.
     if picture is None or (picture.owner.is_demo and not (g.user and g.user.is_demo)):
         abort(404)
-    response = Response(picture.data, mimetype=picture.mime)
+    return picture
+
+
+def picture_response(picture, data):
+    response = Response(data, mimetype=picture.mime)
     # A picture never changes (a new upload is a new address), so browsers can keep it.
     response.headers["Cache-Control"] = ("private" if picture.owner.is_demo else "public") + ", max-age=31536000, immutable"
     return response
+
+
+@bp.get("/images/<int:image_id>")
+def image(image_id):
+    picture = visible_picture(image_id)
+    return picture_response(picture, picture.data)
+
+
+@bp.get("/images/<int:image_id>/thumb")
+def image_thumb(image_id):
+    picture = visible_picture(image_id)
+    # Older pictures have no thumbnail, so they send the full one.
+    return picture_response(picture, picture.thumb or picture.data)
 
 
 @bp.get("/healthz")

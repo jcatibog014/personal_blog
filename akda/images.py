@@ -14,6 +14,8 @@ from .models import Image
 
 MAX_SIDE = 1400
 QUALITY = 78
+THUMB_SIDE = 160
+THUMB_QUALITY = 70
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "GIF", "MPO"}  # MPO = some phone cameras' JPEG
 # A "decompression bomb" is a tiny file that opens into a gigantic picture.
 # Pillow refuses anything over this many pixels (about 50 megapixels).
@@ -51,6 +53,14 @@ def process(raw):
         raise PictureError("That file isn't a picture we can read.") from None
 
 
+def make_thumb(webp_data):
+    """A small square for lists: the Archive can show many without a heavy page."""
+    with PillowImage.open(io.BytesIO(webp_data)) as image:
+        out = io.BytesIO()
+        ImageOps.fit(image, (THUMB_SIDE, THUMB_SIDE)).save(out, "WEBP", quality=THUMB_QUALITY, method=4)
+        return out.getvalue()
+
+
 def add(s, user, raw):
     """Upload bytes -> a new Image row. Raises PictureError. The caller commits."""
     limit = MAX_FOR_DEMO if user.is_demo else MAX_PER_USER
@@ -59,6 +69,7 @@ def add(s, user, raw):
     if used >= limit:
         raise PictureError(f"You have reached the limit of {limit} pictures.")
     data, width, height = process(raw)
-    image = Image(owner_id=user.id, data=data, mime="image/webp", width=width, height=height, size=len(data))
+    image = Image(owner_id=user.id, data=data, thumb=make_thumb(data), mime="image/webp",
+                  width=width, height=height, size=len(data))
     s.add(image)
     return image

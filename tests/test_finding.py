@@ -237,7 +237,7 @@ def test_about_page_shows_the_owners_text_cleaned(app, client):
 
 
 def test_about_page_without_an_owner(client):
-    assert b"hasn't been written yet" in client.get("/about").data
+    assert b"currently writing my About page" in client.get("/about").data
 
 
 def test_only_the_owner_can_edit_about(app, owner_id, author_id):

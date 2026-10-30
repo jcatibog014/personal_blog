@@ -6,7 +6,7 @@
     {% if about_html %}
       <div class="article-body">{{ about_html|safe }}</div>
     {% else %}
-      <p class="page-intro">This page hasn't been written yet.</p>
+      <p class="page-intro">Welcome to Akda! I'm currently writing my About page. Check back soon to learn more about me and this blog.</p>
     {% endif %}
     {% if can.can_edit_about(g.user) %}
       <p class="about-edit"><a class="button button-quiet" href="{{ url_for('auth.settings') }}">Edit the About page</a></p>
