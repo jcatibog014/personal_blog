@@ -44,10 +44,25 @@ def test_logged_in_people_see_their_account_sections(app, client, role, sees_abo
     assert (b"About Page" in page) is sees_about
 
 
-def test_the_demo_can_choose_a_theme_and_log_out_but_change_nothing_else(demo):
+def test_the_demo_sees_every_section_but_can_only_use_the_theme_and_log_out(demo):
     page = demo.get("/settings").data
     assert b"Appearance" in page and b"Log out" in page and b"demo" in page
-    assert b"Your Password" not in page and b"Your Name" not in page
+    assert b"Your Password" in page and b"Your Name" in page and b"Demo Writer" in page
+    assert page.count(b'class="stack plain-fieldset" disabled') == 2
+    assert b"About Page" not in page  # that one is only ever for the owner
+
+
+@pytest.mark.parametrize("data", [
+    {"action": "name", "display_name": "Hacked"},
+    {"action": "password", "current_password": "x", "new_password": "long enough", "confirm_password": "long enough"},
+])
+def test_the_server_still_refuses_the_demos_changes(demo, data):
+    assert post(demo, "/settings", data).status_code == 403
+
+
+def test_real_accounts_have_no_switched_off_forms(app, client):
+    log_in_as(client, make_user(app, "ana", READER))
+    assert b"disabled" not in client.get("/settings").data
 
 
 def test_settings_says_who_is_logged_in(app, client):

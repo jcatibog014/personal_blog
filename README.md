@@ -27,7 +27,7 @@ How you get each account:
 - **Reader:** press "Sign up".
 - **Author:** the owner sends you a special link. It works one time and stops after 7 days.
 - **Owner:** this is made on the command line only.
-- **Try Demo:** press the button on the login page. You become a sample author. Nobody else sees what you write, and it resets every hour.
+- **Try Demo:** press the button on the login page. You become a sample author, with sample posts and comments on every page. Nobody else sees what you write, and it resets every hour.
 
 ## What It Can Do
 

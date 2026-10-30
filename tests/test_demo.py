@@ -1,14 +1,19 @@
-"""The demo: a sandbox author that can never touch or reach the real site."""
+"""The demo: a sandbox author that can never touch or reach the real site,
+with an example on every page it can open."""
+import re
 from datetime import timedelta
 
 import pytest
 from sqlalchemy import func, select
 
-from akda import auth, db, seed
+from akda import auth, db, images, seed
 from akda.dates import utcnow
-from akda.models import APPROVED, AUTHOR, Comment, CommentReport, Image, PENDING, Post, PostVersion, User
+from akda.models import AUTHOR, OWNER, PENDING, Comment, CommentReport, Image, Post, PostVersion, Tag, User
+from akda.views.desk import DEMO_MAX_POSTS
 
-from .conftest import PASSWORD, add_post, edit_form, get_post, get_user, log_in_as, post as post_form
+from .conftest import PASSWORD, add_post, edit_form, get_post, get_user, log_in_as, make_user, post as post_form
+
+SAMPLE_POSTS = 11  # 7 published, 2 drafts, 2 scheduled
 
 
 @pytest.fixture
@@ -35,23 +40,116 @@ def count(app, model, *where):
 def test_try_demo_logs_in_as_a_sample_author_with_sample_posts(app, demo):
     user = demo_user(app)
     assert user.is_demo and user.role == AUTHOR
-    assert count(app, Post, Post.author_id == user.id) == 6
+    assert count(app, Post, Post.author_id == user.id) == SAMPLE_POSTS
     page = demo.get("/desk/").data
     assert b"Building a Small Web App" in page and b"You are in the demo" in page
     assert b"A Post From the Future" in demo.get("/desk/?tab=scheduled").data
 
 
 def test_the_sample_has_something_to_moderate(app, demo):
-    assert count(app, Comment, Comment.status == PENDING) == 1
+    assert count(app, Comment, Comment.status == PENDING) == 2
     assert b"Which notebook" in demo.get("/desk/comments").data
     assert b"advert" in demo.get("/desk/comments?tab=reported").data
 
 
-def test_the_demo_can_moderate_its_own_sample(app, demo):
+def test_the_demo_can_moderate_its_own_sample_and_still_has_some_left(app, demo):
     with app.app_context():
         waiting = db.session().scalar(select(Comment.id).where(Comment.status == PENDING))
     assert post_form(demo, f"/desk/comments/{waiting}/approve").status_code == 302
-    assert count(app, Comment, Comment.status == PENDING) == 0
+    assert count(app, Comment, Comment.status == PENDING) == 1
+
+
+# ---------- Every page has an example ----------
+
+EMPTY_PAGE_SIGNS = [b"empty-state", b"No comments yet", b"currently writing my About page"]
+
+
+@pytest.mark.parametrize("url", [
+    "/", "/tags", "/archive", "/about", "/search?q=notebook", "/settings", "/desk/", "/desk/?tab=scheduled",
+    "/desk/?tab=published", "/desk/comments", "/desk/comments?tab=reported", "/desk/comments?tab=recent",
+])
+def test_no_page_the_demo_can_open_is_empty(demo, url):
+    response = demo.get(url)
+    assert response.status_code == 200
+    for sign in EMPTY_PAGE_SIGNS:
+        assert sign not in response.data, sign
+
+
+def test_every_tag_page_has_posts(app, demo):
+    with app.app_context():
+        slugs = db.session().scalars(select(Tag.slug)).all()
+    assert len(slugs) >= 5
+    for slug in slugs:
+        response = demo.get(f"/tags/{slug}")
+        assert response.status_code == 200, slug
+        assert b"post-card" in response.data, slug
+
+
+def test_every_published_post_has_comments_and_related_posts(app, demo):
+    with app.app_context():
+        slugs = db.session().scalars(select(Post.slug).where(Post.status == "published", Post.published_at <= utcnow())).all()
+    assert len(slugs) == 7
+    for slug in slugs:
+        page = demo.get(f"/posts/{slug}").data
+        assert b"No comments yet" not in page, slug
+        assert b"Related Posts" in page, slug
+
+
+def test_every_post_has_older_versions(app, demo):
+    with app.app_context():
+        ids = db.session().scalars(select(Post.id)).all()
+    assert len(ids) == SAMPLE_POSTS
+    for post_id in ids:
+        assert count(app, PostVersion, PostVersion.post_id == post_id) >= 2, post_id
+        page = demo.get(f"/desk/posts/{post_id}/versions").data
+        assert b"No Versions Yet" not in page and page.count(b"?v=") >= 2
+
+
+def test_the_sample_shows_the_less_common_cases(demo):
+    jeepney = demo.get("/posts/what-a-jeepney-route-taught-me").data
+    assert b"This comment was removed." in jeepney and b"Glad that one is gone" in jeepney
+    hand = demo.get("/posts/why-i-still-write-by-hand").data
+    assert b"edited" in hand  # an edited comment
+    assert b"comment-replies" in hand  # a reply
+    assert b"Waiting for approval" in hand
+    ridge = demo.get("/posts/a-slow-morning-on-the-ridge").data
+    assert b'src="/images/' in ridge.split(b"article-body", 1)[1]  # a picture inside the text
+    assert b">Edit<" in ridge  # a comment still inside its 15 minutes
+    formatted = demo.get("/posts/how-i-format-a-post").data
+    for part in (b"<table>", b"<blockquote>", b"<pre>", b"<ol>", b"<s>"):
+        assert part in formatted, part
+
+
+def test_the_sample_has_posts_with_and_without_covers(demo):
+    archive = demo.get("/archive").data
+    assert b"/thumb" in archive and b'<span class="archive-thumb"></span>' in archive
+    assert b"post-card-text" in demo.get("/").data
+
+
+def test_every_sample_picture_in_a_post_exists(app, demo):
+    with app.app_context():
+        bodies = db.session().scalars(select(Post.body_md)).all()
+    pictures = re.findall(r"/images/(\d+)", " ".join(bodies))
+    assert pictures
+    for picture in pictures:
+        assert demo.get(f"/images/{picture}").status_code == 200
+
+
+def test_the_demo_has_its_own_about_page(app, client, demo):
+    assert b"sample writer" in demo.get("/about").data
+    assert b"sample writer" not in client.get("/about").data  # strangers never see it
+
+
+def test_the_demo_sees_its_about_page_even_when_the_owner_wrote_one(app, demo):
+    make_user(app, "juan", OWNER, bio="The real owner's words.")
+    page = demo.get("/about").data
+    assert b"sample writer" in page and b"real owner" not in page
+    assert b"real owner" in app.test_client().get("/about").data
+
+
+def test_the_search_page_suggests_words_only_in_the_demo(client, demo):
+    assert b"q=notebook" in demo.get("/search").data
+    assert b"q=notebook" not in client.get("/search").data
 
 
 def test_nobody_can_log_in_as_a_demo_user(app, demo):
@@ -140,13 +238,13 @@ def test_the_demo_resets_after_an_hour_and_not_before(app, demo, ctx):
     auth.demo_user(ctx, user.demo_reset_at + timedelta(minutes=61))
     ctx.commit()
     assert count(app, Post, Post.title == "Made by a visitor") == 0
-    assert count(app, Post, Post.author_id == user.id) == 6
+    assert count(app, Post, Post.author_id == user.id) == SAMPLE_POSTS
 
 
 def test_a_reset_leaves_nothing_behind_and_touches_nothing_real(app, demo, ctx, author_id):
     real = add_post(app, author_id, title="Real Post")
     sizes = {model: count(app, model) for model in (Post, Comment, CommentReport, Image, PostVersion, User)}
-    assert sizes[CommentReport] == 1 and sizes[Image] == 4
+    assert sizes[CommentReport] == 2 and sizes[Image] == 6
     for _ in range(3):
         auth.demo_user(ctx, utcnow(), force_reset=True)
         ctx.commit()
@@ -157,8 +255,9 @@ def test_a_reset_leaves_nothing_behind_and_touches_nothing_real(app, demo, ctx, 
 def test_the_reset_command(app, demo):
     result = app.test_cli_runner().invoke(args=["reset-demo"])
     assert result.exit_code == 0, result.output
-    assert count(app, Post, Post.author_id == demo_user(app).id) == 6
+    assert count(app, Post, Post.author_id == demo_user(app).id) == SAMPLE_POSTS
 
 
-def test_sample_comments_are_approved_or_waiting(app, demo):
-    assert count(app, Comment, Comment.status == APPROVED) == 4
+def test_the_sample_leaves_room_to_try_things(demo):
+    assert SAMPLE_POSTS < DEMO_MAX_POSTS
+    assert 6 < images.MAX_FOR_DEMO
