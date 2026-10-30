@@ -49,5 +49,8 @@ Python 3.13 is at `%LOCALAPPDATA%\Programs\Python\Python313\python.exe`. Use the
 - **Title Case** for the menu, page titles (`h1`), section headings, empty-state titles and anything that names a page ("My Posts", "On This Page"). Small words (a, an, the, and, or, of, in, on, to, for, with, as, at, by) stay lowercase unless first. **Sentence case** for everything else: action buttons ("New post", "Save draft"), labels, hints, messages. The main button of a page is last on the right.
 - Controls are the same height (`--control-height`) with bottoms aligned. Sizes in `rem`; the root font steps up at 1600 / 1920 / 2300px. The masthead and the page share `max-width: 110rem`, so their edges line up. The article stays at reading width (42rem), with side columns on wide screens.
 - Public pages have the masthead on top; the Desk (`desk_base.html`) has a sidebar from 56rem up and a ☰ menu below.
+- **Tags, Archive and About stay in the main menu.** Readers must never need Settings to find posts, and Settings only holds real settings.
+- **Search is a magnifying glass, not a box in the menu:** a link to `/search` that `setUpSearch()` in `app.js` turns into a button opening the `#site-search` bar under the menu (Escape closes it). The `/search` page has its own form.
+- The home page is the featured post, then Latest Posts (Older Posts from page 2), then Browse by Tag (`tags.with_counts(limit=)`, all the same size for neatness).
 - **README screenshots** live in `docs/screenshots/` and are taken as the demo. Retake a screenshot whenever its page changes visibly.
 - Commit messages and PR bodies go through files (`git commit -F`, `gh pr create --body-file`): PowerShell 5.1 breaks quotes in arguments.

@@ -15,25 +15,26 @@
 <body class="{% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main">Skip to content</a>
   {% block header %}
+  {% from "_macros.html" import search_form, search_link %}
+  {% set page = request.endpoint %}
+  {% set on_search_page = page == 'public.search' %}
   <header class="masthead">
     <div class="masthead-top">
       <a class="wordmark" href="{{ url_for('public.home') }}">Akda</a>
-      <button class="menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="site-nav" hidden>
-        <span aria-hidden="true">&#9776;</span> Menu
-      </button>
+      <div class="masthead-tools">
+        {{ search_link('search-toggle-phone', on_search_page) }}
+        <button class="menu-button" type="button" data-menu-button aria-expanded="false" aria-controls="site-nav" hidden>
+          <span aria-hidden="true">&#9776;</span> Menu
+        </button>
+      </div>
     </div>
     <nav class="site-nav" id="site-nav" aria-label="Main">
       <ul class="nav-links">
-        {% set page = request.endpoint %}
         <li><a href="{{ url_for('public.home') }}"{% if page == 'public.home' %} aria-current="page"{% endif %}>Home</a></li>
         <li><a href="{{ url_for('public.all_tags') }}"{% if page in ('public.all_tags', 'public.tag_page') %} aria-current="page"{% endif %}>Tags</a></li>
         <li><a href="{{ url_for('public.archive') }}"{% if page == 'public.archive' %} aria-current="page"{% endif %}>Archive</a></li>
         <li><a href="{{ url_for('public.about') }}"{% if page == 'public.about' %} aria-current="page"{% endif %}>About</a></li>
       </ul>
-      <form class="search-box" method="get" action="{{ url_for('public.search') }}" role="search">
-        <input type="search" name="q" value="{{ words if words is defined else '' }}" placeholder="Search" aria-label="Search posts" maxlength="100">
-        <button class="button button-quiet" type="submit">Search</button>
-      </form>
       <div class="nav-tools">
         {% if g.user %}
           {% if can.can_write(g.user) %}<a href="{{ url_for('desk.my_posts') }}">The Desk</a>{% endif %}
@@ -42,8 +43,11 @@
           <a href="{{ url_for('auth.signup') }}">Sign up</a>
         {% endif %}
         <a href="{{ url_for('auth.settings') }}"{% if page == 'auth.settings' %} aria-current="page"{% endif %}>Settings</a>
+        {{ search_link('search-toggle-wide', on_search_page) }}
       </div>
     </nav>
+    {# The search page has its own form, so it doesn't need this one. #}
+    {% if not on_search_page %}{{ search_form(id='site-search', hidden=True) }}{% endif %}
   </header>
   {% endblock %}
 

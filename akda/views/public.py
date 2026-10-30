@@ -12,6 +12,7 @@ from ..models import OWNER, Image, Post, Tag, User
 bp = Blueprint("public", __name__)
 
 SEARCH_MAX_LENGTH = 100
+HOME_TAGS = 15
 
 
 def page_number():
@@ -25,10 +26,12 @@ def page_number():
 def home():
     now = utcnow()
     page = page_number()
-    featured, grid, pages = posts.home_page(db.session(), g.user, now, page)
+    s = db.session()
+    featured, grid, pages = posts.home_page(s, g.user, now, page)
     if page > pages:
         abort(404)
-    return render_template("home.html", featured=featured, grid=grid, page=page, pages=pages)
+    return render_template("home.html", featured=featured, grid=grid, page=page, pages=pages,
+                           popular_tags=tags.with_counts(s, g.user, now, limit=HOME_TAGS))
 
 
 @bp.get("/posts/<slug>")

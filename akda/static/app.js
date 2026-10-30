@@ -39,6 +39,34 @@ function setUpMenu() {
   });
 }
 
+// The magnifying glass opens the search bar under the menu. Without this it is
+// just a link to the search page.
+function setUpSearch() {
+  const bar = document.getElementById("site-search");
+  if (!bar) return;
+  const toggles = [...document.querySelectorAll("[data-search-toggle]")];
+  const setOpen = (open) => {
+    bar.hidden = !open;
+    toggles.forEach((toggle) => toggle.setAttribute("aria-expanded", open));
+    if (open) bar.querySelector("input").focus();
+  };
+  toggles.forEach((toggle) => {
+    toggle.setAttribute("role", "button");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      setOpen(bar.hidden);
+    });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || bar.hidden) return;
+    setOpen(false);
+    // Back to whichever glass is showing on this screen size.
+    const showing = toggles.find((toggle) => toggle.offsetParent !== null);
+    if (showing) showing.focus();
+  });
+}
+
 function setUpConfirm() {
   document.querySelectorAll("form[data-confirm]").forEach((form) => {
     form.addEventListener("submit", (event) => {
@@ -231,5 +259,6 @@ function setUpEditor() {
 
 setUpTheme();
 setUpMenu();
+setUpSearch();
 setUpConfirm();
 setUpEditor();

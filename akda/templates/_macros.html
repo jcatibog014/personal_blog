@@ -2,6 +2,26 @@
 
 {% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
 
+{# A plain link to the search page, so it works without JavaScript. On other pages
+   app.js makes it open the search bar under the menu instead. #}
+{% macro search_link(class, on_search_page) %}
+  <a class="search-toggle {{ class }}" href="{{ url_for('public.search') }}" aria-label="Search"
+     {% if on_search_page %}aria-current="page"{% else %}data-search-toggle aria-controls="site-search"{% endif %}>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5"></circle>
+      <line x1="15.5" y1="15.5" x2="21" y2="21"></line>
+    </svg>
+  </a>
+{% endmacro %}
+
+{% macro search_form(words='', id=None, hidden=False, class='') %}
+  <form class="search-bar {{ class }}" method="get" action="{{ url_for('public.search') }}" role="search"
+        {% if id %}id="{{ id }}"{% endif %} {% if hidden %}hidden{% endif %}>
+    <input type="search" name="q" value="{{ words }}" placeholder="Search posts" aria-label="Search posts" maxlength="100">
+    <button class="button" type="submit">Search</button>
+  </form>
+{% endmacro %}
+
 {% macro field(name, label, value='', error=None, type='text', hint=None, attrs='') %}
   <label class="field{% if error %} has-error{% endif %}">
     <span class="field-label">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</span>
