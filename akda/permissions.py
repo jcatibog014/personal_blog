@@ -25,6 +25,10 @@ def can_write(user):
     return is_active(user) and user.role in (OWNER, AUTHOR)
 
 
+def can_edit_about(user):
+    return is_owner(user)
+
+
 # ---------- Posts ----------
 
 def is_live(post, now):

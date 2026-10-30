@@ -23,6 +23,8 @@ ALLOWED_TAGS = {
 }
 ALLOWED_ATTRIBUTES = {"a": {"href", "title"}, "img": {"src", "alt", "title"}, "ol": {"start"}}
 OUR_PICTURE = re.compile(r"/images/\d+")
+HEADING = re.compile(r"<h([23])>(.*?)</h\1>", re.DOTALL)
+HEADING_WITH_ID = re.compile(r'<h([23]) id="([^"]+)">(.*?)</h\1>', re.DOTALL)
 EXCERPT_LENGTH = 200
 
 
@@ -38,12 +40,41 @@ def clean_html(raw):
 
 
 def to_html(markdown_text):
-    return clean_html(_markdown.render(markdown_text or ""))
+    return _add_heading_ids(clean_html(_markdown.render(markdown_text or "")))
+
+
+def _plain_text(safe_html):
+    return " ".join(html.unescape(nh3.clean(safe_html, tags=set())).split())
+
+
+def _add_heading_ids(safe_html):
+    """Give h2 and h3 an id, so On This Page can link to them. The "h-" start
+    means a heading can never clash with an id the page itself uses."""
+    used = set()
+
+    def with_id(match):
+        level, inner = match.groups()
+        words = re.sub(r"[^a-z0-9]+", "-", _plain_text(inner).lower()).strip("-") or "section"
+        anchor = f"h-{words}"
+        number = 2
+        while anchor in used:
+            anchor = f"h-{words}-{number}"
+            number += 1
+        used.add(anchor)
+        return f'<h{level} id="{anchor}">{inner}</h{level}>'
+
+    return HEADING.sub(with_id, safe_html)
+
+
+def headings(safe_html):
+    """[{"level", "id", "text"}] of the h2 and h3 headings, for On This Page."""
+    return [{"level": int(level), "id": anchor, "text": _plain_text(inner)}
+            for level, anchor, inner in HEADING_WITH_ID.findall(safe_html)]
 
 
 def excerpt(safe_html, length=EXCERPT_LENGTH):
     """The first words as plain text, for the card of a post without a summary."""
-    text = " ".join(html.unescape(nh3.clean(safe_html, tags=set())).split())
+    text = _plain_text(safe_html)
     if len(text) <= length:
         return text
     return text[:length].rsplit(" ", 1)[0] + "..."

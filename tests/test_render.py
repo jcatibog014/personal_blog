@@ -6,7 +6,7 @@ from akda import render
 
 def test_markdown_becomes_html():
     html = render.to_html("## Title\n\nSome **bold** and *italic*.\n\n- one\n- two\n\n| a |\n|---|\n| b |")
-    for part in ("<h2>Title</h2>", "<strong>bold</strong>", "<em>italic</em>", "<li>one</li>", "<td>b</td>"):
+    for part in ('<h2 id="h-title">Title</h2>', "<strong>bold</strong>", "<em>italic</em>", "<li>one</li>", "<td>b</td>"):
         assert part in html
 
 

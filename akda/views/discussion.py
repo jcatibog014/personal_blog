@@ -12,6 +12,12 @@ bp = Blueprint("discussion", __name__)
 QUEUE_TABS = {"waiting": "Waiting", "reported": "Reported", "recent": "Recent"}
 
 
+@bp.app_context_processor
+def template_helpers():
+    # A function: only the Desk's sidebar calls it, so other pages pay no query.
+    return {"waiting_comments": lambda: comments.waiting_count(db.session(), g.user)}
+
+
 def comment_or_404(comment_id):
     """A comment this person can at least see, or 404."""
     comment = db.session().get(Comment, comment_id)

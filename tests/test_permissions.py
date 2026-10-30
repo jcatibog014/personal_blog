@@ -146,7 +146,7 @@ def test_a_removed_or_rejected_comment_cannot_be_edited():
     assert can.can_edit_comment(reader, a_comment(status=REJECTED), NOW) is False
 
 
-@pytest.mark.parametrize("who,on_own_post,on_other_post,on_demo_post", [
+@pytest.mark.parametrize("who,on_authors_post,on_other_authors_post,on_demo_post", [
     ("visitor", False, False, False),
     ("reader", False, False, False),
     ("author", True, False, False),
@@ -155,22 +155,20 @@ def test_a_removed_or_rejected_comment_cannot_be_edited():
     ("blocked_owner", False, False, False),
     ("demo", False, False, True),
 ])
-def test_can_moderate_comment(who, on_own_post, on_other_post, on_demo_post):
+def test_can_moderate_comment(who, on_authors_post, on_other_authors_post, on_demo_post):
     person = PEOPLE[who]
-    mine = a_post(author=PEOPLE["author"])
-    other = a_post(author=PEOPLE["other_author"])
-    assert can.can_moderate_comment(person, a_comment(post=mine)) is (on_own_post if who != "other_author" else False)
-    assert can.can_moderate_comment(person, a_comment(post=other)) is (on_other_post if who != "author" else False)
+    assert can.can_moderate_comment(person, a_comment(post=a_post(author=PEOPLE["author"]))) is on_authors_post
+    assert can.can_moderate_comment(person, a_comment(post=a_post(author=PEOPLE["other_author"]))) is on_other_authors_post
     assert can.can_moderate_comment(person, a_comment(post=DEMO_LIVE)) is on_demo_post
 
 
 @pytest.mark.parametrize("who,expected", [
-    ("visitor", False), ("author", True), ("reader", True), ("other_author", True), ("owner", True),
+    ("visitor", False), ("reader", False), ("author", True), ("other_author", True), ("owner", True),
+    ("blocked_author", False),
 ])
 def test_can_report_someone_elses_comment(who, expected):
-    # Written by the other author here, so "other_author" is the writer.
-    comment = a_comment("reader")
-    assert can.can_report_comment(PEOPLE[who], comment) is (expected and who != "reader")
+    # The reader wrote it, so the reader is the one person who can't report it.
+    assert can.can_report_comment(PEOPLE[who], a_comment("reader")) is expected
 
 
 def test_cannot_report_a_hidden_comment():

@@ -32,6 +32,7 @@ bp = Blueprint("auth", __name__)
 USERNAME_MIN_LENGTH = 3
 USERNAME_MAX_LENGTH = 40
 DISPLAY_NAME_MAX_LENGTH = 60
+ABOUT_MAX_LENGTH = 10_000
 PASSWORD_MIN_LENGTH = 8
 USERNAME_PATTERN = re.compile(r"[a-z0-9_-]+")
 # Nobody may sign up with a name that looks like it speaks for the site.
@@ -272,6 +273,17 @@ def settings():
                 g.user.display_name = name
                 db.session().commit()
                 flash("Your name has been changed.")
+                return redirect(url_for("auth.settings"))
+        elif action == "about":
+            if not permissions.can_edit_about(g.user):
+                abort(403)
+            about = request.form.get("bio", "").replace("\r\n", "\n").strip()
+            if len(about) > ABOUT_MAX_LENGTH:
+                errors["bio"] = f"Use at most {ABOUT_MAX_LENGTH:,} characters."
+            else:
+                g.user.bio = about
+                db.session().commit()
+                flash("The About page has been saved.")
                 return redirect(url_for("auth.settings"))
         elif action == "password":
             new = request.form.get("new_password", "")

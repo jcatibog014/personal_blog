@@ -33,6 +33,7 @@
     <div class="editor-fields">
       <div class="editor-title">{{ field('title', 'Title', form.title, errors.title, attrs='maxlength="200"') }}</div>
       {{ field('summary', 'Summary', form.summary, errors.summary, hint='Optional, shown on cards', attrs='maxlength="300"') }}
+      {{ field('tags', 'Tags', form.tags, errors.tags, hint='Up to 5, with commas between') }}
     </div>
 
     <div class="pane-tabs" data-pane-tabs hidden>

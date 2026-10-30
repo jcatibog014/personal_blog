@@ -1,5 +1,5 @@
 {% extends "desk_base.html" if can.can_write(g.user) else "base.html" %}
-{% from "_macros.html" import csrf, field %}
+{% from "_macros.html" import csrf, field, textarea %}
 {% block title %}Settings - {{ APP_NAME }}{% endblock %}
 {% block content %}
   <div class="narrow">
@@ -16,6 +16,18 @@
           <div class="form-actions"><button class="button" type="submit">Save name</button></div>
         </form>
       </section>
+      {% if can.can_edit_about(g.user) %}
+        <section class="card">
+          <h2>About Page</h2>
+          <p class="card-note">Shown on the <a href="{{ url_for('public.about') }}">About page</a>. You can use Markdown.</p>
+          <form method="post" class="stack">
+            {{ csrf() }}
+            <input type="hidden" name="action" value="about">
+            {{ textarea('bio', 'About this blog', g.user.bio, errors.bio, rows=8) }}
+            <div class="form-actions"><button class="button" type="submit">Save About page</button></div>
+          </form>
+        </section>
+      {% endif %}
       <section class="card">
         <h2>Your Password</h2>
         <p class="card-note">Changing your password logs you out on your other devices.</p>

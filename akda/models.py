@@ -1,6 +1,7 @@
 """The data model.
 
-    users ─┬─< posts ──< comments ──< comment_reports >── users
+    users ─┬─< posts ─┬─< post_tags >── tags
+           │          └─< comments ──< comment_reports >── users
            └─< comments (parent_id points at another comment: one level of replies)
 
 Roles live on the user (permissions.py holds every rule about them).
@@ -8,7 +9,7 @@ Times are naive UTC (dates.utcnow()).
 """
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, ForeignKey, String, Table, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .dates import utcnow
@@ -50,6 +51,26 @@ class User(Base):
     posts: Mapped[list["Post"]] = relationship(back_populates="author")
 
 
+# A plain many-to-many table: both columns together are the key, so a post
+# can't have the same tag twice. Deleting a post or a tag removes its links.
+post_tags = Table(
+    "post_tags",
+    Base.metadata,
+    Column("post_id", ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True),
+    Column("tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True, index=True),
+)
+
+
+class Tag(Base):
+    __tablename__ = "tags"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(30), unique=True)
+    slug: Mapped[str] = mapped_column(String(100), unique=True)
+
+    posts: Mapped[list["Post"]] = relationship(secondary=post_tags, back_populates="tags")
+
+
 class Post(Base):
     __tablename__ = "posts"
     __table_args__ = (
@@ -80,6 +101,7 @@ class Post(Base):
     __mapper_args__ = {"version_id_col": revision}
 
     author: Mapped[User] = relationship(back_populates="posts")
+    tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts", order_by="Tag.name")
     comments: Mapped[list["Comment"]] = relationship(back_populates="post", cascade="all, delete-orphan",
                                                      passive_deletes=True)
 

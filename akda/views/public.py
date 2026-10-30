@@ -1,12 +1,17 @@
 """The pages everyone can see."""
-from flask import Blueprint, abort, g, render_template, request
+from datetime import UTC
+from email.utils import format_datetime
+
+from flask import Blueprint, Response, abort, g, render_template, request, url_for
 from sqlalchemy import select
 
-from .. import comments, db, permissions, posts
+from .. import comments, db, permissions, posts, render, tags
 from ..dates import utcnow
-from ..models import Post
+from ..models import OWNER, Post, Tag, User
 
 bp = Blueprint("public", __name__)
+
+SEARCH_MAX_LENGTH = 100
 
 
 def page_number():
@@ -36,9 +41,75 @@ def show_post(slug):
     s = db.session()
     return render_template(
         "post.html", post=post, now=now, is_live=permissions.is_live(post, now),
+        headings=render.headings(post.body_html), related=posts.related(s, post, g.user, now),
         thread=comments.thread(s, post, g.user), comment_count=comments.public_count(s, post),
         already_reported=comments.reported_by(s, g.user, post),
     )
+
+
+@bp.get("/tags")
+def all_tags():
+    return render_template("tags.html", tags=tags.with_counts(db.session(), g.user, utcnow()))
+
+
+@bp.get("/tags/<slug>")
+def tag_page(slug):
+    s = db.session()
+    tag = s.scalar(select(Tag).where(Tag.slug == slug))
+    if tag is None:
+        abort(404)
+    page = page_number()
+    items, pages = posts.grid_page(s, g.user, utcnow(), page, Post.tags.any(Tag.id == tag.id))
+    # A tag whose posts are all hidden doesn't exist for this viewer.
+    if not items or page > pages:
+        abort(404)
+    return render_template("tag.html", tag=tag, items=items, page=page, pages=pages)
+
+
+@bp.get("/search")
+def search():
+    words = " ".join(request.args.get("q", "").split())[:SEARCH_MAX_LENGTH]
+    page = page_number()
+    items, pages = [], 1
+    if words:
+        items, pages = posts.grid_page(db.session(), g.user, utcnow(), page, posts.search_filter(words))
+        if page > pages:
+            abort(404)
+    return render_template("search.html", words=words, items=items, page=page, pages=pages)
+
+
+@bp.get("/archive")
+def archive():
+    return render_template("archive.html", months=posts.archive(db.session(), g.user, utcnow()))
+
+
+def site_owner(s):
+    return s.scalar(select(User).where(User.role == OWNER, User.is_demo.is_(False)).order_by(User.id))
+
+
+@bp.get("/about")
+def about():
+    owner = site_owner(db.session())
+    return render_template("about.html", about_html=render.to_html(owner.bio) if owner and owner.bio else "")
+
+
+@bp.get("/feed.xml")
+def feed():
+    site = url_for("public.home", _external=True).rstrip("/")
+    items = [
+        {
+            "title": post.title,
+            "link": url_for("public.show_post", slug=post.slug, _external=True),
+            "author": post.author.display_name,
+            "date": format_datetime(post.published_at.replace(tzinfo=UTC)),
+            # Feed readers open posts somewhere else, so our pictures need the full address.
+            "html": post.body_html.replace('src="/images/', f'src="{site}/images/'),
+        }
+        for post in posts.feed_items(db.session(), utcnow())
+    ]
+    # .xml templates are autoescaped: the HTML goes in as escaped text, as RSS wants.
+    xml = render_template("feed.xml", items=items, site=site, feed_url=url_for("public.feed", _external=True))
+    return Response(xml, mimetype="application/rss+xml")
 
 
 @bp.get("/healthz")

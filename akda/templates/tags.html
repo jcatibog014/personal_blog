@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Tags - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <h1>Tags</h1>
+  {% if tags %}
+    <ul class="tag-index">
+      {% for tag, number in tags %}
+        <li><a href="{{ url_for('public.tag_page', slug=tag.slug) }}"><span class="tag-index-name">{{ tag.name }}</span> <span class="byline">{{ number }} {{ 'post' if number == 1 else 'posts' }}</span></a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state"><h2>No Tags Yet</h2><p>Tags will appear here once posts have them.</p></div>
+  {% endif %}
+{% endblock %}

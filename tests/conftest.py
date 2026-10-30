@@ -3,9 +3,9 @@ from datetime import timedelta
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.orm import undefer
+from sqlalchemy.orm import selectinload, undefer
 
-from akda import auth, create_app, db, posts
+from akda import auth, create_app, db, posts, tags
 from akda.dates import utcnow
 from akda.models import AUTHOR, OWNER, PUBLISHED, READER, Post, User
 
@@ -87,16 +87,19 @@ def get_user(app, username):
 HOUR = timedelta(hours=1)
 
 
-def add_post(app, author_id, title="A Post", body="Some text.", status=PUBLISHED, published_at=None, **fields):
+def add_post(app, author_id, title="A Post", body="Some text.", summary="", status=PUBLISHED, published_at=None,
+             tag_names=(), **fields):
     """Put a post straight into the database. Published an hour ago unless told
     otherwise. Returns the id."""
     with app.app_context():
         s = db.session()
         post = Post(author_id=author_id, **fields)
-        posts.apply_content(post, {"title": title, "summary": "", "body_md": body}, utcnow())
-        if status == PUBLISHED:
-            posts.publish(s, post, published_at or utcnow() - HOUR)
         s.add(post)
+        with s.no_autoflush:
+            post.tags = tags.resolve(s, list(tag_names))
+            posts.apply_content(post, {"title": title, "summary": summary, "body_md": body}, utcnow())
+            if status == PUBLISHED:
+                posts.publish(s, post, published_at or utcnow() - HOUR)
         s.commit()
         return post.id
 
@@ -104,14 +107,15 @@ def add_post(app, author_id, title="A Post", body="Some text.", status=PUBLISHED
 def get_post(app, post_id):
     with app.app_context():
         return db.session().scalar(
-            select(Post).where(Post.id == post_id).options(undefer(Post.body_md), undefer(Post.body_html)))
+            select(Post).where(Post.id == post_id).options(
+                undefer(Post.body_md), undefer(Post.body_html), selectinload(Post.tags)))
 
 
 def edit_form(post_id, app, **fields):
     """What the editor sends, with the right revision."""
     post = get_post(app, post_id)
     return {"revision": post.revision, "title": post.title, "summary": post.summary,
-            "body_md": post.body_md, "action": "save", **fields}
+            "body_md": post.body_md, "tags": ", ".join(tag.name for tag in post.tags), "action": "save", **fields}
 
 
 @pytest.fixture

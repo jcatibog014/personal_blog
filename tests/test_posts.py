@@ -32,7 +32,7 @@ def test_saving_a_draft_keeps_it_private(app, writer, author_id):
     assert response.status_code == 302
     saved = get_post(app, draft)
     assert saved.title == "My Thoughts"
-    assert "<h2>Hi</h2>" in saved.body_html
+    assert ">Hi</h2>" in saved.body_html
     assert saved.status == DRAFT and saved.slug is None
 
 

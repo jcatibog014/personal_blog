@@ -1,9 +1,10 @@
 """The Desk: where owners and authors write. Readers get 403 on every page here."""
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import StaleDataError
 
-from .. import db, permissions, posts, render
+from .. import db, permissions, posts, render, tags
 from ..auth import login_required
 from ..dates import utcnow
 from ..models import DRAFT, PUBLISHED, Post
@@ -104,6 +105,9 @@ def save_post(post, form, action):
     if errors:
         return errors, 400
     now = utcnow()
+    # Tags first: their queries must run before the post has unsaved changes, or
+    # SQLAlchemy would save the post early, outside the try below.
+    post.tags = tags.resolve(db.session(), tags.parse(form["tags"]))
     posts.apply_content(post, form, now)
     message = "Your draft has been saved."
     if post.status == PUBLISHED:
@@ -113,7 +117,7 @@ def save_post(post, form, action):
         message = "Your post is published."
     try:
         db.session().commit()
-    except StaleDataError:  # another save got in between the check above and this one
+    except (StaleDataError, IntegrityError):  # another save got in between the check above and this one
         db.session().rollback()
         return {"stale": STALE}, 409
     flash(message)
