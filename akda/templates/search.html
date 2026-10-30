@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_cards.html" import post_grid, pagination %}
+{% block title %}Search - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <h1 class="listing-title">Search</h1>
+  {% if not words %}
+    <p class="page-intro">Type a word in the search box to find posts.</p>
+  {% elif items %}
+    <p class="page-intro">Posts that mention "{{ words }}"</p>
+    {{ post_grid(items) }}
+    {{ pagination(page, pages, 'public.search', q=words) }}
+  {% else %}
+    <div class="empty-state">
+      <h2>Nothing Found</h2>
+      <p>No posts mention "{{ words }}". Try a different word.</p>
+    </div>
+  {% endif %}
+{% endblock %}

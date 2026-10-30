@@ -1,0 +1,76 @@
+{% extends "desk_base.html" %}
+{% from "_macros.html" import csrf %}
+{% from "_cards.html" import pagination %}
+{% block title %}People - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <h1>People</h1>
+    <form method="post" action="{{ url_for('people.create_invite') }}" class="actions">
+      {{ csrf() }}
+      <button class="button" type="submit">Invite an author</button>
+    </form>
+  </div>
+
+  {% if new_link %}
+    <section class="card new-invite">
+      <h2>Your New Invite Link</h2>
+      <p class="card-note">Send this link to the new author. It works once and ends in 7 days. It is only shown now, so copy it before you leave this page.</p>
+      <p><code class="copy-line">{{ new_link }}</code></p>
+    </section>
+  {% endif %}
+
+  {% if invites %}
+    <section class="people-section">
+      <h2>Waiting Invites</h2>
+      <ul class="post-rows">
+        {% for invite in invites %}
+          <li class="post-row">
+            <p class="byline">Made {{ invite.created_at|nice_datetime }} &middot; ends {{ invite.expires_at|nice_date }}</p>
+            <form method="post" action="{{ url_for('people.cancel_invite', invite_id=invite.id) }}">
+              {{ csrf() }}
+              <button class="button button-quiet" type="submit">Cancel invite</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <section class="people-section">
+    <h2>Everyone</h2>
+    <div class="table-scroll">
+      <table class="people-table">
+        <thead>
+          <tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Joined</th><th scope="col">Posts</th><th scope="col">Comments</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+        </thead>
+        <tbody>
+          {% for person, post_count, comment_count in people %}
+            <tr{% if person.is_blocked %} class="is-blocked"{% endif %}>
+              <td><strong>{{ person.display_name }}</strong>{% if person.display_name != person.username %}<br><span class="byline">{{ person.username }}</span>{% endif %}</td>
+              <td>{{ person.role|capitalize }}{% if person.is_blocked %}<br><span class="pill">Blocked</span>{% endif %}</td>
+              <td>{{ person.created_at|nice_date }}</td>
+              <td>{{ post_count }}</td>
+              <td>{{ comment_count }}</td>
+              <td class="people-action">
+                {% if can.can_block_user(g.user, person) %}
+                  {% if person.is_blocked %}
+                    <form method="post" action="{{ url_for('people.unblock', user_id=person.id) }}">
+                      {{ csrf() }}
+                      <button class="button button-quiet" type="submit">Unblock</button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{{ url_for('people.block', user_id=person.id) }}" data-confirm="Block {{ person.display_name }}? They will be logged out and can't log in again.">
+                      {{ csrf() }}
+                      <button class="button button-danger" type="submit">Block</button>
+                    </form>
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ pagination(page, pages, 'people.index') }}
+  </section>
+{% endblock %}

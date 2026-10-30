@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% from "_cards.html" import post_grid, pagination %}
+{% block title %}{{ tag.name }} - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <p class="kicker"><a href="{{ url_for('public.all_tags') }}">Tag</a></p>
+  <h1 class="listing-title">{{ tag.name }}</h1>
+  {{ post_grid(items) }}
+  {{ pagination(page, pages, 'public.tag_page', slug=tag.slug) }}
+{% endblock %}

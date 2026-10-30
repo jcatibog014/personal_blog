@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}Join as an Author - {{ APP_NAME }}{% endblock %}
+{% block body_class %}welcome-layout{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+  <div class="welcome">
+    {% include "_welcome.html" %}
+    <section class="welcome-cards">
+      <div class="card">
+        <h1>Join as an Author</h1>
+        {% if g.user %}
+          <p>You are logged in as {{ g.user.display_name }}. This link makes a new author account, so please log out first.</p>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            {{ csrf() }}
+            <button class="button" type="submit">Log out</button>
+          </form>
+        {% else %}
+          <p class="card-note">You have been invited to write on Akda. This link works once.</p>
+          <form method="post" class="stack">
+            {{ csrf() }}
+            {{ field('username', 'Username', username, errors.username, hint='Letters, numbers, - and _', attrs='autocomplete="username" required autofocus') }}
+            {{ field('password', 'Password', '', errors.password, type='password', hint='At least 8 characters', attrs='autocomplete="new-password" required') }}
+            {{ field('confirm_password', 'Password again', type='password', attrs='autocomplete="new-password" required') }}
+            <button class="button" type="submit">Create my author account</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+{% endblock %}

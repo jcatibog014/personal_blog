@@ -1,0 +1,108 @@
+{# The comments under an article. Text is always escaped here: comments are plain text. #}
+{% macro comment_form(post, parent=None) %}
+  <form method="post" action="{{ url_for('discussion.add_comment', post_id=post.id) }}" class="stack comment-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if parent %}<input type="hidden" name="parent_id" value="{{ parent.id }}">{% endif %}
+    <label class="field">
+      <span class="field-label">{{ 'Your reply' if parent else 'Your comment' }}</span>
+      <textarea name="body" rows="{{ 3 if parent else 4 }}" maxlength="2000" required></textarea>
+    </label>
+    <div class="form-actions">
+      <button class="button" type="submit">{{ 'Reply' if parent else 'Post comment' }}</button>
+    </div>
+  </form>
+{% endmacro %}
+
+{% macro comment_item(comment, post, now, already_reported, may_comment) %}
+  <article class="comment{% if comment.status == 'pending' %} comment-pending{% endif %}" id="comment-{{ comment.id }}">
+    {% if comment.deleted_at %}
+      <p class="comment-removed">This comment was removed.</p>
+    {% else %}
+      <header class="comment-head">
+        <strong class="comment-author">{{ comment.user.display_name }}</strong>
+        <span class="byline">{{ comment.created_at|nice_date }}{% if comment.edited_at %} &middot; edited{% endif %}</span>
+        {% if comment.status == 'pending' %}<span class="pill">Waiting for approval</span>{% endif %}
+      </header>
+      <p class="comment-body">{{ comment.body }}</p>
+      <div class="comment-actions">
+        {% if comment.status == 'pending' and can.can_moderate_comment(g.user, comment, now) %}
+          <form method="post" action="{{ url_for('discussion.approve_comment', comment_id=comment.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="link-button" type="submit">Approve</button>
+          </form>
+          <form method="post" action="{{ url_for('discussion.reject_comment', comment_id=comment.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="link-button" type="submit">Reject</button>
+          </form>
+        {% endif %}
+        {% if can.can_edit_comment(g.user, comment, now) %}
+          <a href="{{ url_for('discussion.edit_comment', comment_id=comment.id) }}">Edit</a>
+        {% endif %}
+        {% if can.can_delete_comment(g.user, comment, now) %}
+          <form method="post" action="{{ url_for('discussion.delete_comment', comment_id=comment.id) }}" data-confirm="Remove this comment?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="link-button" type="submit">Remove</button>
+          </form>
+        {% endif %}
+        {% if can.can_report_comment(g.user, comment) %}
+          {% if comment.id in already_reported %}
+            <span class="byline">Reported</span>
+          {% else %}
+            <details class="inline-form">
+              <summary>Report</summary>
+              <form method="post" action="{{ url_for('discussion.report_comment', comment_id=comment.id) }}" class="stack">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label class="field">
+                  <span class="field-label">What is wrong with it? <span class="hint">Optional</span></span>
+                  <input type="text" name="reason" maxlength="200">
+                </label>
+                <div class="form-actions"><button class="button button-quiet" type="submit">Send report</button></div>
+              </form>
+            </details>
+          {% endif %}
+        {% endif %}
+        {% if may_comment and comment.status == 'approved' %}
+          <details class="inline-form">
+            <summary>Reply</summary>
+            {{ comment_form(post, comment) }}
+          </details>
+        {% endif %}
+      </div>
+    {% endif %}
+  </article>
+{% endmacro %}
+
+<section class="comments" id="comments">
+  <h2>Comments{% if comment_count %} ({{ comment_count }}){% endif %}</h2>
+  {% set may_comment = can.can_comment(g.user, post, now) %}
+  {% if may_comment %}
+    {{ comment_form(post) }}
+  {% elif not g.user and is_live %}
+    <p class="comments-login">
+      <a href="{{ url_for('auth.login', next=url_for('public.show_post', slug=post.slug) ~ '#comments') }}">Log in</a> or
+      <a href="{{ url_for('auth.signup', next=url_for('public.show_post', slug=post.slug) ~ '#comments') }}">sign up</a>
+      to join the conversation.
+    </p>
+  {% elif g.user and g.user.is_demo and is_live %}
+    <p class="comments-login">The demo can only comment on demo posts.</p>
+  {% endif %}
+
+  {% if thread %}
+    <div class="comment-list">
+      {% for comment, replies in thread %}
+        <div class="comment-thread">
+          {{ comment_item(comment, post, now, already_reported, may_comment) }}
+          {% if replies %}
+            <div class="comment-replies">
+              {% for reply in replies %}
+                {{ comment_item(reply, post, now, already_reported, may_comment) }}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% elif is_live %}
+    <p class="comments-empty">No comments yet.</p>
+  {% endif %}
+</section>

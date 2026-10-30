@@ -1,0 +1,45 @@
+{% extends "desk_base.html" if can.can_write(g.user) else "base.html" %}
+{% from "_macros.html" import csrf, field, textarea %}
+{% block title %}Settings - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <div class="narrow">
+    <h1>Settings</h1>
+    {% if g.user.is_demo %}
+      <p class="page-intro">The demo account can't change its settings.</p>
+    {% else %}
+      <section class="card">
+        <h2>Your Name</h2>
+        <form method="post" class="stack">
+          {{ csrf() }}
+          <input type="hidden" name="action" value="name">
+          {{ field('display_name', 'Name shown on your posts and comments', g.user.display_name, errors.display_name, attrs='required maxlength="60"') }}
+          <div class="form-actions"><button class="button" type="submit">Save name</button></div>
+        </form>
+      </section>
+      {% if can.can_edit_about(g.user) %}
+        <section class="card">
+          <h2>About Page</h2>
+          <p class="card-note">Shown on the <a href="{{ url_for('public.about') }}">About page</a>. You can use Markdown.</p>
+          <form method="post" class="stack">
+            {{ csrf() }}
+            <input type="hidden" name="action" value="about">
+            {{ textarea('bio', 'About this blog', g.user.bio, errors.bio, rows=8) }}
+            <div class="form-actions"><button class="button" type="submit">Save About page</button></div>
+          </form>
+        </section>
+      {% endif %}
+      <section class="card">
+        <h2>Your Password</h2>
+        <p class="card-note">Changing your password logs you out on your other devices.</p>
+        <form method="post" class="stack">
+          {{ csrf() }}
+          <input type="hidden" name="action" value="password">
+          {{ field('current_password', 'Current password', '', errors.current_password, type='password', attrs='autocomplete="current-password" required') }}
+          {{ field('new_password', 'New password', '', errors.new_password, type='password', hint='At least 8 characters', attrs='autocomplete="new-password" required') }}
+          {{ field('confirm_password', 'New password again', type='password', attrs='autocomplete="new-password" required') }}
+          <div class="form-actions"><button class="button" type="submit">Change password</button></div>
+        </form>
+      </section>
+    {% endif %}
+  </div>
+{% endblock %}

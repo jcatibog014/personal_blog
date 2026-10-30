@@ -1,0 +1,114 @@
+{% extends "desk_base.html" %}
+{% from "_macros.html" import csrf, field, textarea %}
+{% block title %}{{ post.title or 'New Post' }} - {{ APP_NAME }}{% endblock %}
+{% block page_class %}editor-page{% endblock %}
+{% block content %}
+  <form method="post" enctype="multipart/form-data" class="editor" data-editor
+        data-preview-url="{{ url_for('desk.preview') }}"
+        data-picture-url="{{ url_for('desk.upload_picture') }}"
+        {% if post.status == 'draft' %}data-autosave-url="{{ url_for('desk.autosave', post_id=post.id) }}"{% endif %}>
+    {{ csrf() }}
+    <input type="hidden" name="revision" value="{{ post.revision }}" data-revision>
+
+    <div class="editor-bar">
+      <div class="editor-where">
+        <a class="back-link" href="{{ url_for('desk.my_posts') }}">My Posts</a>
+        <span class="editor-status">
+          {% if post.status == 'draft' %}Draft
+          {% elif is_scheduled %}Scheduled for {{ post.published_at|nice_datetime }}
+          {% else %}Published{% endif %}
+          &middot; <span data-save-status>Saved {{ post.updated_at|nice_datetime }}</span>
+        </span>
+      </div>
+      <div class="form-actions">
+        <a class="button button-quiet" href="{{ url_for('desk.versions', post_id=post.id) }}">Versions ({{ version_count }})</a>
+        <button class="button button-quiet no-js-only" type="submit" name="action" value="preview">Preview</button>
+        {% if post.status == 'draft' %}
+          <button class="button button-quiet" type="submit" name="action" value="save">Save draft</button>
+          <button class="button" type="submit" name="action" value="publish" data-publish-button>Publish</button>
+        {% elif is_scheduled %}
+          <button class="button button-quiet" type="submit" name="action" value="publish_now">Publish now</button>
+          <button class="button" type="submit" name="action" value="update">Update</button>
+        {% else %}
+          <button class="button" type="submit" name="action" value="update">Update</button>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if errors.stale %}<p class="form-error" role="alert">{{ errors.stale }}</p>{% endif %}
+    <p class="form-error" role="alert" data-editor-error hidden></p>
+    {% if restored_from %}
+      <p class="notice">This is the text from {{ restored_from.saved_at|nice_datetime }}. Readers still see the current text until you press Update.</p>
+    {% endif %}
+
+    <div class="editor-fields">
+      <div class="editor-title">{{ field('title', 'Title', form.title, errors.title, attrs='maxlength="200"') }}</div>
+      {{ field('summary', 'Summary', form.summary, errors.summary, hint='Optional, shown on cards', attrs='maxlength="300"') }}
+      {{ field('tags', 'Tags', form.tags, errors.tags, hint='Up to 5, with commas between') }}
+      {% if post.status == 'draft' or is_scheduled %}
+        {{ field('publish_at', 'Publish at', form.publish_at or (post.published_at|input_datetime if is_scheduled else ''), errors.publish_at, type='datetime-local', hint='Optional, Philippine time', attrs='data-publish-at') }}
+      {% endif %}
+      <div class="field cover-field{% if errors.cover %} has-error{% endif %}">
+        <label class="field-label" for="cover">Cover picture <span class="hint">Optional</span></label>
+        <input class="file-input" type="file" id="cover" name="cover" accept="image/*">
+        {% if errors.cover %}<p class="field-error">{{ errors.cover }}</p>{% endif %}
+        {% if post.cover_image_id %}
+          <div class="cover-current">
+            <img src="{{ url_for('public.image', image_id=post.cover_image_id) }}" alt="The current cover">
+            <label class="check"><input type="checkbox" name="remove_cover" value="1"> Remove this cover</label>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="pane-tabs" data-pane-tabs hidden>
+      <button type="button" class="pane-tab" data-pane-tab="write" aria-pressed="true">Write</button>
+      <button type="button" class="pane-tab" data-pane-tab="preview" aria-pressed="false">Preview</button>
+    </div>
+
+    {# Above both panes, so the Text and Preview boxes start level. #}
+    <div class="editor-toolbar" data-toolbar hidden>
+      <button type="button" class="tool-button" data-insert="bold">Bold</button>
+      <button type="button" class="tool-button" data-insert="italic">Italic</button>
+      <button type="button" class="tool-button" data-insert="heading">Heading</button>
+      <button type="button" class="tool-button" data-insert="quote">Quote</button>
+      <button type="button" class="tool-button" data-insert="list">List</button>
+      <button type="button" class="tool-button" data-insert="link">Link</button>
+      <button type="button" class="tool-button" data-picture-button>Picture</button>
+      <input type="file" accept="image/*" data-picture-input hidden>
+    </div>
+
+    <div class="editor-panes" data-panes>
+      <div class="editor-pane" data-pane="write">
+        {{ textarea('body_md', 'Text', form.body_md, errors.body_md, hint='in Markdown', rows=22, attrs='data-body spellcheck="true"') }}
+      </div>
+      <div class="editor-pane" data-pane="preview">
+        <p class="field-label">Preview</p>
+        <div class="editor-preview article-body" data-preview aria-live="off">{{ preview_html|safe }}</div>
+      </div>
+    </div>
+  </form>
+
+  {# Without JavaScript the Picture button can't work, so a plain form does the same job. #}
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('desk.upload_picture') }}" target="_blank" class="no-js-only picture-form">
+    {{ csrf() }}
+    <label class="field">
+      <span class="field-label">Add a picture to the text</span>
+      <input class="file-input" type="file" name="picture" accept="image/*" required>
+    </label>
+    <button class="button button-quiet" type="submit">Upload</button>
+  </form>
+
+  <section class="editor-danger" aria-label="Remove this post">
+    {% if post.status == 'published' %}
+      <form method="post" action="{{ url_for('desk.unpublish_post', post_id=post.id) }}">
+        {{ csrf() }}
+        <button class="button button-quiet" type="submit">{{ 'Back to draft' if is_scheduled else 'Unpublish' }}</button>
+      </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('desk.delete_post', post_id=post.id) }}" data-confirm="Delete this post and its comments? This can't be undone.">
+      {{ csrf() }}
+      <button class="button button-danger" type="submit">Delete post</button>
+    </form>
+  </section>
+{% endblock %}

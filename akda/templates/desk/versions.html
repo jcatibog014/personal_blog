@@ -1,0 +1,38 @@
+{% extends "desk_base.html" %}
+{% block title %}Versions - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <p><a class="back-link" href="{{ url_for('desk.edit_post', post_id=post.id) }}">Back to the editor</a></p>
+  <div class="page-head">
+    <h1>Versions of {{ post.title or 'Untitled Draft' }}</h1>
+  </div>
+  {% if history %}
+    <p class="page-intro">A version is kept each time you save, publish or update. The newest {{ history|length }} are here.</p>
+    <div class="versions">
+      <ul class="version-list">
+        {% for version in history %}
+          <li>
+            <a href="{{ url_for('desk.versions', post_id=post.id, v=version.id) }}"{% if chosen and version.id == chosen.id %} aria-current="true"{% endif %}>
+              {{ version.saved_at|nice_datetime }}
+              {% if loop.first %}<span class="byline">Newest</span>{% endif %}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      <section class="version-view">
+        <div class="version-head">
+          <h2>{{ chosen.title or 'Untitled Draft' }}</h2>
+          <form method="post" action="{{ url_for('desk.restore_version', post_id=post.id, version_id=chosen.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button" type="submit">{{ 'Use this text' if post.status == 'draft' else 'Open in the editor' }}</button>
+          </form>
+        </div>
+        <div class="article-body">{{ chosen_html|safe }}</div>
+      </section>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h2>No Versions Yet</h2>
+      <p>A version is kept each time you press Save draft, Publish or Update.</p>
+    </div>
+  {% endif %}
+{% endblock %}

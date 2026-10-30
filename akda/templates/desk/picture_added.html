@@ -1,0 +1,10 @@
+{% extends "desk_base.html" %}
+{% block title %}Picture Added - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <div class="narrow">
+    <h1>Picture Added</h1>
+    <p class="page-intro">Copy this line into your text where the picture should go.</p>
+    <p><code class="copy-line">{{ markdown }}</code></p>
+    <img src="{{ url }}" alt="The picture you uploaded">
+  </div>
+{% endblock %}
