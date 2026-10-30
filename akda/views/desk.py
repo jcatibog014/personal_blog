@@ -14,6 +14,7 @@ bp = Blueprint("desk", __name__, url_prefix="/desk")
 
 TABS = {"drafts": "Drafts", "scheduled": "Scheduled", "published": "Published"}
 STALE = "This post changed in another tab or by someone else. Copy your text, then reload the page."
+DEMO_MAX_POSTS = 20
 
 
 @bp.before_request
@@ -81,6 +82,9 @@ def my_posts():
 @bp.post("/posts/new")
 def new_post():
     s = db.session()
+    if g.user.is_demo and posts.count_where(s, Post.author_id == g.user.id) >= DEMO_MAX_POSTS:
+        flash(f"The demo can hold {DEMO_MAX_POSTS} posts. Delete one to write another.")
+        return redirect(url_for("desk.my_posts"))
     post = Post(author=g.user)
     s.add(post)
     s.commit()

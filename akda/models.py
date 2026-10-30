@@ -5,7 +5,8 @@
            │          ├─< comments ──< comment_reports >── users
            │          └── images (the cover)
            ├─< comments (parent_id points at another comment: one level of replies)
-           └─< images
+           ├─< images
+           └─< invites
 
 Roles live on the user (permissions.py holds every rule about them).
 Times are naive UTC (dates.utcnow()).
@@ -52,6 +53,19 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
     posts: Mapped[list["Post"]] = relationship(back_populates="author")
+
+
+class Invite(Base):
+    """A one-time link that makes an author (invites.py)."""
+    __tablename__ = "invites"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # never the token itself
+    created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    expires_at: Mapped[datetime]
+    used_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    used_at: Mapped[datetime | None]
 
 
 class Image(Base):

@@ -21,11 +21,12 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 from flask.cli import with_appcontext
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import db, permissions
 from .dates import utcnow
-from .models import READER, ROLES, User
+from .models import AUTHOR, READER, ROLES, User
 
 bp = Blueprint("auth", __name__)
 
@@ -41,6 +42,11 @@ RESERVED_USERNAMES = {"admin", "administrator", "owner", "akda", "moderator", "s
 # This makes guessing a password on the live site very slow.
 MAX_FAILED_LOGINS = 5
 LOCK_TIME = timedelta(minutes=15)
+
+DEMO_USERNAME = "demo"
+# Many visitors share the demo. Its posts are made fresh when someone
+# starts the demo and the last reset was more than an hour ago.
+DEMO_RESET_AFTER = timedelta(hours=1)
 
 WRONG_LOGIN = "Wrong username or password."
 BLOCKED_LOGIN = "This account has been blocked."
@@ -119,6 +125,22 @@ def check_login(s, username, password, moment):
     user.failed_logins, user.locked_until = 0, None
     s.commit()
     return user, None
+
+
+def demo_user(s, moment, force_reset=False):
+    """The demo author, made (or made fresh) when needed. The caller commits."""
+    from . import seed
+
+    user = s.scalar(select(User).where(User.username == DEMO_USERNAME, User.is_demo.is_(True)))
+    if user is None:
+        # Nobody knows this password: the demo is only opened with the button.
+        user = create_user(s, DEMO_USERNAME, secrets.token_urlsafe(32), role=AUTHOR,
+                           display_name="Demo Writer", is_demo=True)
+
+    if force_reset or user.demo_reset_at is None or user.demo_reset_at < moment - DEMO_RESET_AFTER:
+        seed.reset_demo(s, user, moment)
+        user.demo_reset_at = moment
+    return user
 
 
 def safe_next(target, default=None):
@@ -212,6 +234,24 @@ def login():
             return redirect(safe_next(next_page, after_login_page(user)))
     status = 401 if error else 200
     return render_template("login.html", error=error, username=username, next=next_page), status
+
+
+@bp.post("/demo")
+def demo():
+    s = db.session()
+    try:
+        user = demo_user(s, utcnow())
+        s.commit()
+    except (IntegrityError, StaleDataError):
+        # Two visitors pressed at once and the other one's reset won. Use theirs.
+        s.rollback()
+        user = s.scalar(select(User).where(User.username == DEMO_USERNAME, User.is_demo.is_(True)))
+        if user is None:
+            flash("The demo is busy. Please try again.")
+            return redirect(url_for("auth.login"))
+    log_in(user)
+    flash("Welcome to the demo! You are a sample author, so feel free to try anything.")
+    return redirect(url_for("desk.my_posts"))
 
 
 @bp.route("/signup", methods=["GET", "POST"])
@@ -343,8 +383,18 @@ def set_password_command(username):
     click.echo("The password is changed.")
 
 
+@click.command("reset-demo")
+@with_appcontext
+def reset_demo_command():
+    """Make the demo's sample posts fresh now."""
+    s = db.session()
+    demo_user(s, utcnow(), force_reset=True)
+    s.commit()
+    click.echo("The demo is fresh.")
+
+
 def init_app(app):
     app.jinja_env.globals["csrf_token"] = csrf_token
     app.jinja_env.globals["can"] = permissions
-    for command in (create_user_command, set_password_command):
+    for command in (create_user_command, set_password_command, reset_demo_command):
         app.cli.add_command(command)

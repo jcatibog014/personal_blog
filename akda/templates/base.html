@@ -53,6 +53,9 @@
   {% endblock %}
 
   <main id="main" class="page {% block page_class %}{% endblock %}">
+    {% if g.user and g.user.is_demo %}
+      <p class="demo-note">You are in the demo. What you write is only seen by demo visitors, and it resets every hour.</p>
+    {% endif %}
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <div class="flashes" role="status">

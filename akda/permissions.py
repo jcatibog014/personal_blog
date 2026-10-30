@@ -29,6 +29,16 @@ def can_edit_about(user):
     return is_owner(user)
 
 
+def can_manage_people(user):
+    """Invite authors, block users."""
+    return is_owner(user)
+
+
+def can_block_user(user, person):
+    """Anyone but an owner, so the site can never lock out the person running it."""
+    return can_manage_people(user) and person.role != OWNER and not person.is_demo
+
+
 # ---------- Posts ----------
 
 def is_live(post, now):

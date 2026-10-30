@@ -20,6 +20,14 @@
         </form>
         <p class="card-note">New here? <a href="{{ url_for('auth.signup', next=next or none) }}">Sign up</a></p>
       </div>
+      <div class="card">
+        <h2>Just Looking?</h2>
+        <p class="card-note">Try the Desk as a sample author. Nothing you do there reaches the real site.</p>
+        <form method="post" action="{{ url_for('auth.demo') }}">
+          {{ csrf() }}
+          <button class="button button-quiet" type="submit">Try Demo</button>
+        </form>
+      </div>
     </section>
   </div>
 {% endblock %}

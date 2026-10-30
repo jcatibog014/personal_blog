@@ -15,6 +15,9 @@
           {% set page = request.endpoint %}
           <li><a href="{{ url_for('desk.my_posts') }}"{% if page in ('desk.my_posts', 'desk.edit_post') %} aria-current="page"{% endif %}>My Posts</a></li>
           <li><a href="{{ url_for('discussion.queue') }}"{% if page == 'discussion.queue' %} aria-current="page"{% endif %}>Comments{% set waiting = waiting_comments() %}{% if waiting %} ({{ waiting }}){% endif %}</a></li>
+          {% if can.can_manage_people(g.user) %}
+            <li><a href="{{ url_for('people.index') }}"{% if page == 'people.index' %} aria-current="page"{% endif %}>People</a></li>
+          {% endif %}
           <li><a href="{{ url_for('auth.settings') }}"{% if page == 'auth.settings' %} aria-current="page"{% endif %}>Settings</a></li>
           <li><a href="{{ url_for('public.home') }}">View Site</a></li>
         </ul>
