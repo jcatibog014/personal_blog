@@ -13,7 +13,7 @@ OUT = Path(__file__).parent.parent / "akda" / "seed_covers"
 WIDTH, HEIGHT = 1200, 800
 SCALE = 2  # draw big, then shrink, for smooth edges
 
-INK = "#141414"
+INK = "#232d35"  # lighter than the dark theme's page, so a cover's edge never melts into it
 PAPER = "#f3efe4"
 CRIMSON = "#a4161a"
 SAND = "#d9c9a8"

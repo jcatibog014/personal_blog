@@ -358,6 +358,58 @@ def test_demo_pictures_are_for_demo_visitors_only(app, client, ctx):
 
 def test_a_missing_picture(client):
     assert client.get("/images/999").status_code == 404
+    assert client.get("/images/999/thumb").status_code == 404
+
+
+# ---------- Thumbnails ----------
+
+def test_a_thumbnail_is_a_small_square_webp_without_exif():
+    exif = PillowImage.Exif()
+    exif[0x010E] = "Secret place"
+    data, *_ = images.process(picture_bytes("JPEG", size=(3000, 1500), exif=exif))
+    thumb = images.make_thumb(data)
+    assert len(thumb) < len(data)
+    with PillowImage.open(io.BytesIO(thumb)) as result:
+        assert result.format == "WEBP"
+        assert result.size == (images.THUMB_SIDE, images.THUMB_SIDE)
+        assert not result.getexif()
+
+
+def test_the_thumb_address_sends_the_small_picture(app, client, ctx, author_id):
+    image = images.add(ctx, ctx.get(User, author_id), picture_bytes(size=(1000, 800)))
+    ctx.commit()
+    response = client.get(f"/images/{image.id}/thumb")
+    assert response.status_code == 200 and response.mimetype == "image/webp"
+    assert "immutable" in response.headers["Cache-Control"]
+    with PillowImage.open(io.BytesIO(response.data)) as result:
+        assert result.size == (images.THUMB_SIDE, images.THUMB_SIDE)
+
+
+def test_an_older_picture_without_a_thumb_sends_the_full_one(app, client, ctx, author_id):
+    image = images.add(ctx, ctx.get(User, author_id), picture_bytes())
+    image.thumb = None
+    ctx.commit()
+    assert client.get(f"/images/{image.id}/thumb").data == client.get(f"/images/{image.id}").data
+
+
+def test_demo_thumbs_are_for_demo_visitors_only(app, client, ctx):
+    demo_id = make_user(app, "demo-writer", AUTHOR, is_demo=True)
+    image = images.add(ctx, ctx.get(User, demo_id), picture_bytes())
+    ctx.commit()
+    assert client.get(f"/images/{image.id}/thumb").status_code == 404
+    visitor = log_in_as(app.test_client(), demo_id).get(f"/images/{image.id}/thumb")
+    assert visitor.status_code == 200 and "private" in visitor.headers["Cache-Control"]
+
+
+def test_the_archive_shows_thumbs_and_keeps_rows_without_a_cover_in_line(app, client, ctx, author_id):
+    with_cover = add_post(app, author_id, title="With Cover")
+    add_post(app, author_id, title="No Cover")
+    post = ctx.get(Post, with_cover)
+    post.cover = images.add(ctx, post.author, picture_bytes())
+    ctx.commit()
+    page = client.get("/archive").data
+    assert f'src="/images/{post.cover_image_id}/thumb"'.encode() in page
+    assert b'<span class="archive-thumb"></span>' in page
 
 
 def test_lists_do_not_load_picture_bytes(app, client, ctx, author_id):
