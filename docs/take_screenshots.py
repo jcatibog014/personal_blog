@@ -94,8 +94,8 @@ def shoot_people_page(browser):
 def shoot_page_parts(page):
     """Things that need a scroll or a click first."""
     page.goto(f"{BASE}/")
-    # Start at the heading, so the picture shows Latest Posts down to Browse by Tag.
-    page.evaluate("document.querySelector('.section-title').scrollIntoView(); window.scrollBy(0, -16)")
+    # The bottom of the page: the last posts, some with no cover, then Browse by Tag.
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     save(page, "browse-by-tag.png")
 
     page.goto(f"{BASE}/")
@@ -114,7 +114,7 @@ def shoot_editor_and_versions(page):
     page.locator(".post-row h2 a").first.click()
     save(page, "editor.png")
     body = page.locator("[data-body]")
-    extra = "The tests broke next, and they were right."
+    extra = "One more idea: write less, and keep more of it."
     if extra not in body.input_value():  # the demo keeps it for an hour, if this runs twice
         body.fill(f"{body.input_value()}\n\n{extra}")
     page.get_by_role("button", name="Save draft").click()

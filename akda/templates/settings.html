@@ -19,17 +19,21 @@
       </fieldset>
     </section>
 
-    {% if g.user and not g.user.is_demo %}
+    {% if g.user %}
+      {# The demo sees these as examples, switched off. The server refuses its changes anyway. #}
+      {% set locked = 'disabled' if g.user.is_demo else '' %}
       <section class="setting">
         <div class="setting-text">
           <h2>Your Name</h2>
           <p>Shown on your posts and comments.</p>
         </div>
-        <form method="post" class="stack">
+        <form method="post">
           {{ csrf() }}
           <input type="hidden" name="action" value="name">
-          {{ field('display_name', 'Name', g.user.display_name, errors.display_name, attrs='required maxlength="60"') }}
-          <div class="form-actions"><button class="button" type="submit">Save name</button></div>
+          <fieldset class="stack plain-fieldset" {{ locked }}>
+            {{ field('display_name', 'Name', g.user.display_name, errors.display_name, attrs='required maxlength="60"') }}
+            <div class="form-actions"><button class="button" type="submit">Save name</button></div>
+          </fieldset>
         </form>
       </section>
 
@@ -53,13 +57,15 @@
           <h2>Your Password</h2>
           <p>Changing your password logs you out on your other devices.</p>
         </div>
-        <form method="post" class="stack">
+        <form method="post">
           {{ csrf() }}
           <input type="hidden" name="action" value="password">
-          {{ field('current_password', 'Current password', '', errors.current_password, type='password', attrs='autocomplete="current-password" required') }}
-          {{ field('new_password', 'New password', '', errors.new_password, type='password', hint='At least 8 characters', attrs='autocomplete="new-password" required') }}
-          {{ field('confirm_password', 'New password again', type='password', attrs='autocomplete="new-password" required') }}
-          <div class="form-actions"><button class="button" type="submit">Change password</button></div>
+          <fieldset class="stack plain-fieldset" {{ locked }}>
+            {{ field('current_password', 'Current password', '', errors.current_password, type='password', attrs='autocomplete="current-password" required') }}
+            {{ field('new_password', 'New password', '', errors.new_password, type='password', hint='At least 8 characters', attrs='autocomplete="new-password" required') }}
+            {{ field('confirm_password', 'New password again', type='password', attrs='autocomplete="new-password" required') }}
+            <div class="form-actions"><button class="button" type="submit">Change password</button></div>
+          </fieldset>
         </form>
       </section>
     {% endif %}
@@ -68,7 +74,7 @@
       <div class="setting-text">
         <h2>Your Account</h2>
         {% if g.user and g.user.is_demo %}
-          <p>You are using the demo, so the name and password can't be changed.</p>
+          <p>You are using the demo, so the name and password above can't be changed.</p>
         {% elif g.user %}
           <p>You are logged in as {{ g.user.display_name }}{% if g.user.display_name != g.user.username %} ({{ g.user.username }}){% endif %}.</p>
         {% else %}

@@ -7,6 +7,9 @@
   {{ search_form(words, class='search-page-form') }}
   {% if not words %}
     <p class="page-intro">Type a word to find posts.</p>
+    {% if g.user and g.user.is_demo %}
+      <p>Try <a href="{{ url_for('public.search', q='notebook') }}">notebook</a>, <a href="{{ url_for('public.search', q='jeepney') }}">jeepney</a> or <a href="{{ url_for('public.search', q='habits') }}">habits</a>.</p>
+    {% endif %}
   {% elif items %}
     <p class="page-intro">Posts that mention "{{ words }}"</p>
     {{ post_grid(items) }}

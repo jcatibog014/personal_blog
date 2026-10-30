@@ -92,8 +92,9 @@ def site_owner(s):
 
 @bp.get("/about")
 def about():
-    owner = site_owner(db.session())
-    return render_template("about.html", about_html=render.to_html(owner.bio) if owner and owner.bio else "")
+    # Demo visitors see the sample writer's page, like the rest of the sandbox.
+    person = g.user if g.user is not None and g.user.is_demo else site_owner(db.session())
+    return render_template("about.html", about_html=render.to_html(person.bio) if person and person.bio else "")
 
 
 @bp.get("/feed.xml")

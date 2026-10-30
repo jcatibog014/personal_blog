@@ -276,7 +276,6 @@ img { max-width: 100%; height: auto; display: block; }
 .featured-cover img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
 .post-card-cover { display: block; margin-bottom: .9rem; }
 .post-card-cover img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
-.post-card-text h2 { font-size: 1.75rem; }
 @media (min-width: 62rem) {
   /* A strict grid: the rules meet the picture's top and bottom and the page's right
      edge, so the text column lines up even though the words themselves are ragged. */
@@ -290,6 +289,9 @@ img { max-width: 100%; height: auto; display: block; }
 .post-card h2 { font-size: 1.45rem; margin-bottom: .5rem; }
 .post-card-summary { font-family: var(--reading); font-size: 1.02rem; margin-bottom: .75rem; }
 .post-card .byline { margin-top: auto; }
+/* No cover: a tinted tile with a larger headline, so it fills a row beside pictures on purpose. */
+.post-card.post-card-text { padding: 1.25rem; background: var(--flash); border-top: 0; border-radius: var(--radius); }
+.post-card.post-card-text h2 { font-size: 1.9rem; margin-bottom: .75rem; }
 
 .pagination { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 3rem; }
 .pagination-where { color: var(--ink-soft); }
@@ -326,7 +328,7 @@ img { max-width: 100%; height: auto; display: block; }
   .article-tags .tag-list { flex-direction: column; }
 }
 .related { max-width: 70rem; margin: 3rem auto 0; padding-top: 1.5rem; border-top: 1px solid var(--ink); }
-.related .post-card { border-top: 0; padding-top: 0; }
+.related .post-card:not(.post-card-text) { border-top: 0; padding-top: 0; }
 .reading-column { max-width: 42rem; margin: 0 auto; }
 .about-edit { margin-top: 2rem; }
 
@@ -468,6 +470,9 @@ img { max-width: 100%; height: auto; display: block; }
 .setting-text h2 { font-size: 1.25rem; margin-bottom: .35rem; }
 .setting-text p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
 .setting form { margin: 0; }
+.plain-fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.plain-fieldset:disabled .field input { background: var(--flash); color: var(--ink-soft); border-color: var(--rule); }
+.plain-fieldset:disabled .button { opacity: .45; pointer-events: none; }
 @media (min-width: 48rem) {
   .setting { grid-template-columns: 18rem minmax(0, 1fr); }
 }
