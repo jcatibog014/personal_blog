@@ -1,5 +1,11 @@
 # Plan: "Akda", a personal blog
 
+The plan agreed on 2026-10-30. What changed while building it:
+- On narrower screens, On This Page sits above the article, because a list of headings is no use after them. Tags stay below.
+- The owner's comment queue leaves out posts that went back to draft, so that "drafts stay private" holds for their titles too.
+- The Versions panel is its own page, linked from the editor.
+- Posts got an `excerpt` column (the summary, or the first words without headings) for cards.
+
 ## Context
 
 A new learning project for https://github.com/jcatibog014/personal_blog (it only has a one-line README). People can create posts, edit drafts, publish articles and add comments. The skills to practise are **authentication, authorization and relational data**.

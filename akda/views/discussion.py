@@ -15,7 +15,7 @@ QUEUE_TABS = {"waiting": "Waiting", "reported": "Reported", "recent": "Recent"}
 @bp.app_context_processor
 def template_helpers():
     # A function: only the Desk's sidebar calls it, so other pages pay no query.
-    return {"waiting_comments": lambda: comments.waiting_count(db.session(), g.user)}
+    return {"waiting_comments": lambda: comments.waiting_count(db.session(), g.user, utcnow())}
 
 
 def comment_or_404(comment_id):
@@ -24,7 +24,7 @@ def comment_or_404(comment_id):
     now = utcnow()
     if comment is None or not permissions.can_view_post(g.user, comment.post, now):
         abort(404)
-    if not permissions.can_see_comment(g.user, comment):
+    if not permissions.can_see_comment(g.user, comment, now):
         abort(404)
     return comment
 
@@ -97,7 +97,7 @@ def edit_comment(comment_id):
 @login_required
 def delete_comment(comment_id):
     comment = comment_or_404(comment_id)
-    if not permissions.can_delete_comment(g.user, comment):
+    if not permissions.can_delete_comment(g.user, comment, utcnow()):
         abort(403)
     comments.remove(comment, utcnow())
     db.session().commit()
@@ -128,9 +128,12 @@ def moderated_comment(comment_id):
     comment = db.session().get(Comment, comment_id)
     if comment is None:
         abort(404)
-    if not permissions.can_moderate_comment(g.user, comment):
-        # A pending comment on someone else's post isn't yours to know about.
-        abort(403 if comment.status == "approved" else 404)
+    now = utcnow()
+    if not permissions.can_moderate_comment(g.user, comment, now):
+        # 403 only if they can already see it. A pending comment, or one on a
+        # post that is now somebody's draft, isn't theirs to know about.
+        visible = comment.status == "approved" and permissions.can_view_post(g.user, comment.post, now)
+        abort(403 if visible else 404)
     return comment
 
 
@@ -142,9 +145,9 @@ def queue():
     tab = request.args.get("tab", "waiting")
     if tab not in QUEUE_TABS:
         abort(404)
-    s = db.session()
     finders = {"waiting": comments.waiting, "reported": comments.reported, "recent": comments.recent}
-    return render_template("desk/comments.html", tabs=QUEUE_TABS, tab=tab, shown=finders[tab](s, g.user))
+    return render_template("desk/comments.html", tabs=QUEUE_TABS, tab=tab,
+                           shown=finders[tab](db.session(), g.user, utcnow()))
 
 
 @bp.post("/desk/comments/<int:comment_id>/approve")

@@ -52,8 +52,18 @@ def test_only_our_own_pictures_load():
 
 
 def test_excerpt_is_plain_text_and_cut_at_a_word():
-    html = render.to_html("# Hi\n\nSome *fine* text & more " + "word " * 100)
+    html = render.to_html("Some *fine* text & more " + "word " * 100)
     text = render.excerpt(html)
-    assert text.startswith("Hi Some fine text & more")
+    assert text.startswith("Some fine text & more")
     assert "<" not in text and len(text) <= render.EXCERPT_LENGTH + 3 and text.endswith("...")
     assert render.excerpt(render.to_html("Short.")) == "Short."
+
+
+def test_excerpt_leaves_out_headings_unless_that_is_all_there_is():
+    assert render.excerpt(render.to_html("# Title\n\nFirst.\n\n## Part Two\n\nSecond.")) == "First. Second."
+    assert render.excerpt(render.to_html("## Only a Heading")) == "Only a Heading"
+
+
+def test_excerpt_never_ends_in_four_dots():
+    text = render.excerpt(render.to_html("a" * 90 + ". " + "b" * 200), length=100)
+    assert text == "a" * 90 + "..."

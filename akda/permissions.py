@@ -94,17 +94,19 @@ def can_edit_comment(user, comment, now):
             and comment.status != REJECTED and now <= comment.created_at + COMMENT_EDIT_WINDOW)
 
 
-def can_moderate_comment(user, comment):
-    """The owner moderates everything; an author moderates comments on their own posts."""
+def can_moderate_comment(user, comment, now):
+    """An author moderates comments on their own posts. The owner also moderates
+    on any post they can see, but not on someone's post that went back to being a
+    private draft, and not in the demo's sandbox."""
     if not can_write(user) or comment.deleted_at is not None:
         return False
-    return comment.post.author_id == user.id or (is_owner(user) and not comment.post.author.is_demo)
+    return comment.post.author_id == user.id or (is_owner(user) and can_view_post(user, comment.post, now))
 
 
-def can_delete_comment(user, comment):
+def can_delete_comment(user, comment, now):
     if comment.deleted_at is not None:
         return False
-    return is_own_comment(user, comment) or can_moderate_comment(user, comment)
+    return is_own_comment(user, comment) or can_moderate_comment(user, comment, now)
 
 
 def can_report_comment(user, comment):
@@ -113,12 +115,12 @@ def can_report_comment(user, comment):
             and comment.deleted_at is None)
 
 
-def can_see_comment(user, comment):
+def can_see_comment(user, comment, now):
     """Approved ones are public. Pending ones show to their writer and the moderators."""
     if comment.status == APPROVED:
         return True
     if comment.status == PENDING:
-        return is_own_comment(user, comment) or can_moderate_comment(user, comment)
+        return is_own_comment(user, comment) or can_moderate_comment(user, comment, now)
     return False
 
 

@@ -157,9 +157,15 @@ def test_a_removed_or_rejected_comment_cannot_be_edited():
 ])
 def test_can_moderate_comment(who, on_authors_post, on_other_authors_post, on_demo_post):
     person = PEOPLE[who]
-    assert can.can_moderate_comment(person, a_comment(post=a_post(author=PEOPLE["author"]))) is on_authors_post
-    assert can.can_moderate_comment(person, a_comment(post=a_post(author=PEOPLE["other_author"]))) is on_other_authors_post
-    assert can.can_moderate_comment(person, a_comment(post=DEMO_LIVE)) is on_demo_post
+    assert can.can_moderate_comment(person, a_comment(post=a_post(author=PEOPLE["author"])), NOW) is on_authors_post
+    assert can.can_moderate_comment(person, a_comment(post=a_post(author=PEOPLE["other_author"])), NOW) is on_other_authors_post
+    assert can.can_moderate_comment(person, a_comment(post=DEMO_LIVE), NOW) is on_demo_post
+
+
+def test_a_post_back_in_draft_is_moderated_only_by_its_author():
+    comment = a_comment(post=DRAFT_POST)
+    assert can.can_moderate_comment(PEOPLE["author"], comment, NOW) is True
+    assert can.can_moderate_comment(PEOPLE["owner"], comment, NOW) is False
 
 
 @pytest.mark.parametrize("who,expected", [
@@ -185,9 +191,9 @@ def test_cannot_report_a_hidden_comment():
 ])
 def test_can_see_comment(who, pending, rejected):
     person = PEOPLE[who]
-    assert can.can_see_comment(person, a_comment()) is True
-    assert can.can_see_comment(person, a_comment(status=PENDING)) is pending
-    assert can.can_see_comment(person, a_comment(status=REJECTED)) is rejected
+    assert can.can_see_comment(person, a_comment(), NOW) is True
+    assert can.can_see_comment(person, a_comment(status=PENDING), NOW) is pending
+    assert can.can_see_comment(person, a_comment(status=REJECTED), NOW) is rejected
 
 
 def test_needs_approval_only_for_a_readers_first_comment():

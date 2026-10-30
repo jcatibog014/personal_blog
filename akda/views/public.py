@@ -42,7 +42,7 @@ def show_post(slug):
     return render_template(
         "post.html", post=post, now=now, is_live=permissions.is_live(post, now),
         headings=render.headings(post.body_html), related=posts.related(s, post, g.user, now),
-        thread=comments.thread(s, post, g.user), comment_count=comments.public_count(s, post),
+        thread=comments.thread(s, post, g.user, now), comment_count=comments.public_count(s, post),
         already_reported=comments.reported_by(s, g.user, post),
     )
 

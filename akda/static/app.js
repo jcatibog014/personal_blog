@@ -94,6 +94,7 @@ function setUpPaneTabs(form) {
   const panes = form.querySelector("[data-panes]");
   const show = (name) => {
     panes.dataset.showing = name;
+    form.dataset.showing = name;
     tabs.querySelectorAll("[data-pane-tab]").forEach((tab) => {
       tab.setAttribute("aria-pressed", tab.dataset.paneTab === name);
     });
@@ -179,7 +180,7 @@ function setUpAutosave(form) {
         if (response.status === 409) stopped = true;  // reloading is the only safe next step
       }
     } catch (error) {
-      status.textContent = "Not saved: no connection";
+      status.textContent = "Not saved. Check your connection, or log in again.";
     }
     saving = false;
   };

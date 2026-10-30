@@ -66,18 +66,20 @@
       <button type="button" class="pane-tab" data-pane-tab="preview" aria-pressed="false">Preview</button>
     </div>
 
+    {# Above both panes, so the Text and Preview boxes start level. #}
+    <div class="editor-toolbar" data-toolbar hidden>
+      <button type="button" class="tool-button" data-insert="bold">Bold</button>
+      <button type="button" class="tool-button" data-insert="italic">Italic</button>
+      <button type="button" class="tool-button" data-insert="heading">Heading</button>
+      <button type="button" class="tool-button" data-insert="quote">Quote</button>
+      <button type="button" class="tool-button" data-insert="list">List</button>
+      <button type="button" class="tool-button" data-insert="link">Link</button>
+      <button type="button" class="tool-button" data-picture-button>Picture</button>
+      <input type="file" accept="image/*" data-picture-input hidden>
+    </div>
+
     <div class="editor-panes" data-panes>
       <div class="editor-pane" data-pane="write">
-        <div class="editor-toolbar" data-toolbar hidden>
-          <button type="button" class="tool-button" data-insert="bold">Bold</button>
-          <button type="button" class="tool-button" data-insert="italic">Italic</button>
-          <button type="button" class="tool-button" data-insert="heading">Heading</button>
-          <button type="button" class="tool-button" data-insert="quote">Quote</button>
-          <button type="button" class="tool-button" data-insert="list">List</button>
-          <button type="button" class="tool-button" data-insert="link">Link</button>
-          <button type="button" class="tool-button" data-picture-button>Picture</button>
-          <input type="file" accept="image/*" data-picture-input hidden>
-        </div>
         {{ textarea('body_md', 'Text', form.body_md, errors.body_md, hint='in Markdown', rows=22, attrs='data-body spellcheck="true"') }}
       </div>
       <div class="editor-pane" data-pane="preview">

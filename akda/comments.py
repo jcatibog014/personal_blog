@@ -4,8 +4,8 @@ from datetime import timedelta
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import joinedload, selectinload
 
-from . import permissions
-from .models import APPROVED, PENDING, REJECTED, Comment, CommentReport, Post, User
+from . import permissions, posts
+from .models import APPROVED, PENDING, REJECTED, Comment, CommentReport, Post
 
 BODY_MAX_LENGTH = 2000
 REASON_MAX_LENGTH = 200
@@ -60,7 +60,7 @@ def valid_parent(s, post, parent_id):
     return parent
 
 
-def thread(s, post, viewer):
+def thread(s, post, viewer, now):
     """The comments this viewer may see, as [(comment, [replies])], oldest first.
 
     One query loads the whole post's comments with their writers, however many
@@ -74,7 +74,7 @@ def thread(s, post, viewer):
         comment.post = post  # already loaded: saves a query per comment in the checks below
     replies = {}
     for comment in rows:
-        if comment.parent_id and comment.deleted_at is None and permissions.can_see_comment(viewer, comment):
+        if comment.parent_id and comment.deleted_at is None and permissions.can_see_comment(viewer, comment, now):
             replies.setdefault(comment.parent_id, []).append(comment)
     result = []
     for comment in rows:
@@ -84,7 +84,7 @@ def thread(s, post, viewer):
         if comment.deleted_at is not None:
             if under:
                 result.append((comment, under))
-        elif permissions.can_see_comment(viewer, comment):
+        elif permissions.can_see_comment(viewer, comment, now):
             result.append((comment, under))
     return result
 
@@ -104,38 +104,39 @@ def reported_by(s, user, post):
 
 # ---------- Moderating ----------
 
-def _scope(user):
-    """The comments this user moderates: on their own posts, or for the owner,
-    on every real post. The same rule as permissions.can_moderate_comment."""
+def _scope(user, now):
+    """The comments this user moderates: on their own posts, or for the owner, also
+    on every post visible to them. The same rule as permissions.can_moderate_comment:
+    a post that went back to draft is private, so its title must not show here."""
     if permissions.is_owner(user):
-        return or_(Post.author_id == user.id, Post.author.has(User.is_demo.is_(False)))
+        return or_(Post.author_id == user.id, posts.visible_filter(user, now))
     return Post.author_id == user.id
 
 
-def _queue_query(user):
-    return (select(Comment).join(Comment.post).where(_scope(user), Comment.deleted_at.is_(None))
+def _queue_query(user, now):
+    return (select(Comment).join(Comment.post).where(_scope(user, now), Comment.deleted_at.is_(None))
             .options(joinedload(Comment.user), joinedload(Comment.post)))
 
 
-def waiting(s, user):
-    return s.scalars(_queue_query(user).where(Comment.status == PENDING).order_by(Comment.created_at)).all()
+def waiting(s, user, now):
+    return s.scalars(_queue_query(user, now).where(Comment.status == PENDING).order_by(Comment.created_at)).all()
 
 
-def reported(s, user):
+def reported(s, user, now):
     """Comments with open reports, each with its reports (selectinload: no N+1)."""
     open_report = Comment.reports.any(CommentReport.resolved_at.is_(None))
-    return s.scalars(_queue_query(user).where(open_report, Comment.status == APPROVED)
+    return s.scalars(_queue_query(user, now).where(open_report, Comment.status == APPROVED)
                      .options(selectinload(Comment.reports)).order_by(Comment.created_at)).all()
 
 
-def recent(s, user):
-    return s.scalars(_queue_query(user).where(Comment.status == APPROVED)
+def recent(s, user, now):
+    return s.scalars(_queue_query(user, now).where(Comment.status == APPROVED)
                      .order_by(Comment.created_at.desc()).limit(RECENT_SIZE)).all()
 
 
-def waiting_count(s, user):
+def waiting_count(s, user, now):
     return s.scalar(select(func.count()).select_from(Comment).join(Comment.post).where(
-        _scope(user), Comment.deleted_at.is_(None), Comment.status == PENDING))
+        _scope(user, now), Comment.deleted_at.is_(None), Comment.status == PENDING))
 
 
 def resolve_reports(comment, now):

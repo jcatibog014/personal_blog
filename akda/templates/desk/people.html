@@ -46,7 +46,7 @@
         <tbody>
           {% for person, post_count, comment_count in people %}
             <tr{% if person.is_blocked %} class="is-blocked"{% endif %}>
-              <td><strong>{{ person.display_name }}</strong><br><span class="byline">{{ person.username }}</span></td>
+              <td><strong>{{ person.display_name }}</strong>{% if person.display_name != person.username %}<br><span class="byline">{{ person.username }}</span>{% endif %}</td>
               <td>{{ person.role|capitalize }}{% if person.is_blocked %}<br><span class="pill">Blocked</span>{% endif %}</td>
               <td>{{ person.created_at|nice_date }}</td>
               <td>{{ post_count }}</td>

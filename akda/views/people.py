@@ -2,13 +2,13 @@
 import math
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.exc import IntegrityError
 
 from .. import auth, db, invites, permissions
 from ..auth import login_required
 from ..dates import utcnow
-from ..models import AUTHOR, Comment, Invite, Post, User
+from ..models import AUTHOR, ROLES, Comment, Invite, Post, User
 
 bp = Blueprint("people", __name__)
 
@@ -25,9 +25,10 @@ def people_with_counts(s, page):
     subqueries, so one query gets it all, however many people there are."""
     post_count = select(func.count(Post.id)).where(Post.author_id == User.id).scalar_subquery()
     comment_count = select(func.count(Comment.id)).where(Comment.user_id == User.id).scalar_subquery()
+    role_order = case({role: position for position, role in enumerate(ROLES)}, value=User.role)
     return s.execute(
         select(User, post_count, comment_count).where(User.is_demo.is_(False))
-        .order_by(User.role, User.username).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE)
+        .order_by(role_order, User.username).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE)
     ).all()
 
 

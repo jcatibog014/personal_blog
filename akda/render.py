@@ -25,6 +25,7 @@ ALLOWED_ATTRIBUTES = {"a": {"href", "title"}, "img": {"src", "alt", "title"}, "o
 OUR_PICTURE = re.compile(r"/images/\d+")
 HEADING = re.compile(r"<h([23])>(.*?)</h\1>", re.DOTALL)
 HEADING_WITH_ID = re.compile(r'<h([23]) id="([^"]+)">(.*?)</h\1>', re.DOTALL)
+ANY_HEADING = re.compile(r"<h[1-6][^>]*>.*?</h[1-6]>", re.DOTALL)
 EXCERPT_LENGTH = 200
 
 
@@ -73,8 +74,9 @@ def headings(safe_html):
 
 
 def excerpt(safe_html, length=EXCERPT_LENGTH):
-    """The first words as plain text, for the card of a post without a summary."""
-    text = _plain_text(safe_html)
+    """The first words as plain text, for the card of a post without a summary.
+    Headings read badly in the middle of a sentence, so they are left out."""
+    text = _plain_text(ANY_HEADING.sub(" ", safe_html)) or _plain_text(safe_html)
     if len(text) <= length:
         return text
-    return text[:length].rsplit(" ", 1)[0] + "..."
+    return text[:length].rsplit(" ", 1)[0].rstrip(".,;:!?-") + "..."

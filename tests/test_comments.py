@@ -242,6 +242,23 @@ def test_the_queue_is_for_writers_and_shows_only_their_posts(app, owner_id, auth
     assert b"On Marias post" in owner_page and b"On Rosas post" in owner_page
 
 
+def test_a_post_back_in_draft_leaves_the_owners_queue(app, owner_id, author, reader_id, live):
+    """Its title is private again, even from the owner. Only its author still sees it."""
+    waiting = add_comment(app, live, reader_id, body="Still waiting", status=PENDING)
+    approved = add_comment(app, live, reader_id, body="Already approved")
+    owner = log_in_as(app.test_client(), owner_id)
+    assert b"Hello" in owner.get("/desk/comments").data
+    post_form(author, f"/desk/posts/{live}/unpublish")
+
+    for tab in ("waiting", "recent"):
+        assert b"Hello" not in owner.get(f"/desk/comments?tab={tab}").data
+    assert b"Comments (1)" not in owner.get("/desk/comments").data
+    assert post_form(owner, f"/desk/comments/{waiting}/approve").status_code == 404
+    assert post_form(owner, f"/desk/comments/{approved}/reject").status_code == 404
+    assert post_form(owner, f"/comments/{approved}/delete").status_code == 404
+    assert b"Still waiting" in author.get("/desk/comments").data
+
+
 def test_approve_and_reject(app, client, author, reader_id, live):
     first = add_comment(app, live, reader_id, body="Good one", status=PENDING)
     second = add_comment(app, live, reader_id, body="Bad one", status=PENDING)

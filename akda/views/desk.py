@@ -76,6 +76,9 @@ def my_posts():
     groups = {name: [] for name in TABS}
     for post in mine:
         groups[tab_of(post, now)].append(post)
+    # Drafts stay last-touched first. These read better by their dates.
+    groups["scheduled"].sort(key=lambda post: post.published_at)
+    groups["published"].sort(key=lambda post: post.published_at, reverse=True)
     return render_template("desk/posts.html", tabs=TABS, tab=tab, groups=groups, shown=groups[tab])
 
 

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Tags - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  <h1>Tags</h1>
+  <h1 class="listing-title">Tags</h1>
   {% if tags %}
     <ul class="tag-index">
       {% for tag, number in tags %}
