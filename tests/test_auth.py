@@ -8,7 +8,7 @@ from akda import auth, db
 from akda.dates import utcnow
 from akda.models import AUTHOR, OWNER, READER, User
 
-from .conftest import CSRF, PASSWORD, get_user, log_in_as, make_user, post
+from .conftest import CSRF, PASSWORD, get_user, is_logged_in, log_in_as, make_user, post
 
 
 def sign_up(client, username="ana", password="long enough", confirm=None, **extra):
@@ -24,7 +24,7 @@ def test_sign_up_makes_a_reader_and_logs_in(app, client):
     user = get_user(app, "ana")
     assert user.role == READER
     assert user.password_hash != "long enough"
-    assert client.get("/settings").status_code == 200
+    assert is_logged_in(client)
 
 
 def test_sign_up_ignores_a_role_in_the_form(app, client):
@@ -63,9 +63,9 @@ def test_log_in_and_out(app, client):
     make_user(app, "ana")
     response = post(client, "/login", {"username": "ANA ", "password": PASSWORD})
     assert response.status_code == 302
-    assert client.get("/settings").status_code == 200
+    assert is_logged_in(client)
     post(client, "/logout")
-    assert client.get("/settings").status_code == 302
+    assert not is_logged_in(client)
 
 
 def test_wrong_login_never_says_whether_the_username_exists(app, client):
@@ -111,11 +111,11 @@ def test_demo_users_cannot_log_in_with_the_form(app, client):
 def test_blocking_ends_the_session_at_once(app, client):
     user_id = make_user(app, "ana")
     log_in_as(client, user_id)
-    assert client.get("/settings").status_code == 200
+    assert is_logged_in(client)
     with app.app_context():
         db.session().get(User, user_id).is_blocked = True
         db.session().commit()
-    assert client.get("/settings").status_code == 302
+    assert not is_logged_in(client)
 
 
 def test_changing_the_password_logs_out_other_devices_but_not_this_one(app):
@@ -127,8 +127,8 @@ def test_changing_the_password_logs_out_other_devices_but_not_this_one(app):
         "action": "password", "current_password": PASSWORD,
         "new_password": "a new password", "confirm_password": "a new password"})
     assert response.status_code == 302
-    assert this_device.get("/settings").status_code == 200
-    assert other_device.get("/settings").status_code == 302
+    assert is_logged_in(this_device)
+    assert not is_logged_in(other_device)
 
 
 def test_password_change_needs_the_current_password(app, client):
@@ -196,4 +196,4 @@ def test_set_password_command_ends_sessions(app, client):
     result = app.test_cli_runner().invoke(args=["set-password", "juan"],
                                           input="a long password\na long password\n")
     assert result.exit_code == 0, result.output
-    assert client.get("/settings").status_code == 302
+    assert not is_logged_in(client)

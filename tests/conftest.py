@@ -79,6 +79,14 @@ def log_in_as(client, user_id):
     return client
 
 
+def is_logged_in(client):
+    """The real check: load_user() runs on every request and drops a session that
+    is no longer valid, so ask after a request what is left in the cookie."""
+    client.get("/")
+    with client.session_transaction() as session:
+        return "user_id" in session
+
+
 def get_user(app, username):
     with app.app_context():
         return db.session().scalar(select(User).where(User.username == username))

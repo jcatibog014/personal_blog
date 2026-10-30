@@ -44,12 +44,12 @@ def resolve(s, names):
     return result
 
 
-def with_counts(s, viewer, now):
+def with_counts(s, viewer, now, limit=None):
     """[(tag, number of visible posts)], most used first. An inner join with GROUP
     BY, so a tag whose posts are all hidden doesn't show at all."""
     number = func.count(Post.id)
     query = (select(Tag, number).join(post_tags, post_tags.c.tag_id == Tag.id)
              .join(Post, Post.id == post_tags.c.post_id)
              .where(posts.visible_filter(viewer, now))
-             .group_by(Tag.id).order_by(number.desc(), Tag.name))
+             .group_by(Tag.id).order_by(number.desc(), Tag.name).limit(limit))
     return s.execute(query).all()

@@ -24,11 +24,6 @@
       </nav>
       <div class="sidebar-foot">
         <p class="sidebar-user">{{ g.user.display_name }}</p>
-        <button class="link-button" type="button" data-theme-toggle hidden>Dark mode</button>
-        <form method="post" action="{{ url_for('auth.logout') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="link-button" type="submit">Log out</button>
-        </form>
       </div>
     </div>
   </aside>

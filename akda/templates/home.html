@@ -3,8 +3,28 @@
 {% block content %}
   {% if featured or grid %}
     {% if featured %}{{ featured_post(featured) }}{% endif %}
-    {{ post_grid(grid) }}
+    {% if grid %}
+      {% if page == 1 %}
+        <h2 class="section-title">Latest Posts</h2>
+      {% else %}
+        <h1 class="section-title">Older Posts</h1>
+      {% endif %}
+      {{ post_grid(grid) }}
+    {% endif %}
     {{ pagination(page, pages, 'public.home') }}
+    {% if popular_tags %}
+      <section class="tag-cloud-section">
+        <div class="section-head">
+          <h2>Browse by Tag</h2>
+          <a href="{{ url_for('public.all_tags') }}">All tags</a>
+        </div>
+        <ul class="tag-cloud">
+          {% for tag, number in popular_tags %}
+            <li><a href="{{ url_for('public.tag_page', slug=tag.slug) }}">{{ tag.name }} <span class="byline">{{ number }}</span></a></li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
   {% else %}
     <div class="empty-state">
       <h1>Nothing Published Yet</h1>

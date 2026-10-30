@@ -1,23 +1,26 @@
 // Extras only: every page works without this file.
 
+// The Appearance choice on the Settings page. theme.js applies it on every page.
 function setUpTheme() {
-  const button = document.querySelector("[data-theme-toggle]");
-  if (!button) return;
+  const section = document.querySelector("[data-theme-settings]");
+  if (!section) return;
   const root = document.documentElement;
-  const isDark = () => root.dataset.theme
-    ? root.dataset.theme === "dark"
-    : matchMedia("(prefers-color-scheme: dark)").matches;
-  const label = () => { button.textContent = isDark() ? "Light mode" : "Dark mode"; };
-  button.hidden = false;
-  label();
-  button.addEventListener("click", () => {
-    root.dataset.theme = isDark() ? "light" : "dark";
-    try {
-      localStorage.setItem("akda-theme", root.dataset.theme);
-    } catch (error) {
-      // Storage can be blocked. The theme still changes for this page.
-    }
-    label();
+  section.hidden = false;
+  section.querySelectorAll('input[name="theme"]').forEach((choice) => {
+    choice.checked = choice.value === (root.dataset.theme || "system");
+    choice.addEventListener("change", () => {
+      try {
+        if (choice.value === "system") {
+          delete root.dataset.theme;
+          localStorage.removeItem("akda-theme");
+        } else {
+          root.dataset.theme = choice.value;
+          localStorage.setItem("akda-theme", choice.value);
+        }
+      } catch (error) {
+        // Storage can be blocked. The theme still changes for this page.
+      }
+    });
   });
 }
 
@@ -33,6 +36,34 @@ function setUpMenu() {
   button.addEventListener("click", () => setOpen(button.getAttribute("aria-expanded") !== "true"));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setOpen(false);
+  });
+}
+
+// The magnifying glass opens the search bar under the menu. Without this it is
+// just a link to the search page.
+function setUpSearch() {
+  const bar = document.getElementById("site-search");
+  if (!bar) return;
+  const toggles = [...document.querySelectorAll("[data-search-toggle]")];
+  const setOpen = (open) => {
+    bar.hidden = !open;
+    toggles.forEach((toggle) => toggle.setAttribute("aria-expanded", open));
+    if (open) bar.querySelector("input").focus();
+  };
+  toggles.forEach((toggle) => {
+    toggle.setAttribute("role", "button");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      setOpen(bar.hidden);
+    });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || bar.hidden) return;
+    setOpen(false);
+    // Back to whichever glass is showing on this screen size.
+    const showing = toggles.find((toggle) => toggle.offsetParent !== null);
+    if (showing) showing.focus();
   });
 }
 
@@ -228,5 +259,6 @@ function setUpEditor() {
 
 setUpTheme();
 setUpMenu();
+setUpSearch();
 setUpConfirm();
 setUpEditor();
