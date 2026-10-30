@@ -33,6 +33,7 @@ PAGES = [
     ("reports.png", "/desk/comments?tab=reported", "dark", DESKTOP),
     ("tags.png", "/tags", "light", DESKTOP),
     ("archive.png", "/archive", "light", DESKTOP),
+    ("settings.png", "/settings", "light", DESKTOP),
     ("phone.png", "/", "light", PHONE),
 ]
 

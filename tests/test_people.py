@@ -8,7 +8,7 @@ from akda import db, invites
 from akda.dates import utcnow
 from akda.models import AUTHOR, OWNER, READER, Invite, User
 
-from .conftest import PASSWORD, add_post, get_user, log_in_as, make_user, post as post_form
+from .conftest import PASSWORD, add_post, get_user, is_logged_in, log_in_as, make_user, post as post_form
 
 
 @pytest.fixture
@@ -153,10 +153,10 @@ def test_the_menu_shows_people_only_to_the_owner(app, owner, author_id):
 
 def test_blocking_ends_the_session_and_login_then_unblocking_restores_it(app, owner, reader_id):
     reader = log_in_as(app.test_client(), reader_id)
-    assert reader.get("/settings").status_code == 200
+    assert is_logged_in(reader)
 
     assert post_form(owner, f"/desk/people/{reader_id}/block").status_code == 302
-    assert reader.get("/settings").status_code == 302
+    assert not is_logged_in(reader)
     denied = post_form(app.test_client(), "/login", {"username": "pedro", "password": PASSWORD})
     assert denied.status_code == 401
 

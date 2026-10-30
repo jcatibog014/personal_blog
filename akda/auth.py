@@ -298,10 +298,13 @@ def logout():
 
 
 @bp.route("/settings", methods=["GET", "POST"])
-@login_required
 def settings():
+    """Open to everyone, because choosing a theme needs no account. The forms
+    that change an account are only shown, and only work, when logged in."""
     errors = {}
     if request.method == "POST":
+        if g.user is None:
+            return redirect(url_for("auth.login", next=url_for("auth.settings")))
         if g.user.is_demo:
             abort(403, "The demo account can't change its settings.")
         action = request.form.get("action")

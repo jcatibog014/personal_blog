@@ -32,7 +32,8 @@ How you get each account:
 ## What It Can Do
 
 **For readers**
-- Read posts on a phone or a very wide screen, in light or dark mode.
+- Read posts on a phone or a very wide screen.
+- Choose light or dark mode in Settings. You don't need an account for this.
 - Find posts by tag, by month or with search. Each post shows related posts.
 - Follow the blog with an RSS feed.
 - Write comments and one level of replies. A new reader's first comment waits for approval.
@@ -65,6 +66,7 @@ How you get each account:
 | ![Comments that wait for approval](docs/screenshots/moderation.png) Approving comments | ![Reported comments in dark mode](docs/screenshots/reports.png) Reports, in dark mode |
 | ![All tags](docs/screenshots/tags.png) Tags | ![The archive](docs/screenshots/archive.png) The archive |
 | ![The login page](docs/screenshots/login.png) Log in | ![The home page in dark mode](docs/screenshots/home-dark.png) Dark mode |
+| ![The Settings page](docs/screenshots/settings.png) Settings | ![The home page on a phone](docs/screenshots/phone.png) On a phone |
 
 The small sun, road and book pictures are demo covers. A program draws them (`docs/make_covers.py`).
 

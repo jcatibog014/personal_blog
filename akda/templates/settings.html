@@ -2,24 +2,43 @@
 {% from "_macros.html" import csrf, field, textarea %}
 {% block title %}Settings - {{ APP_NAME }}{% endblock %}
 {% block content %}
-  <div class="narrow">
-    <h1>Settings</h1>
-    {% if g.user.is_demo %}
-      <p class="page-intro">The demo account can't change its settings.</p>
-    {% else %}
-      <section class="card">
-        <h2>Your Name</h2>
+  <div class="settings">
+    <h1 class="listing-title">Settings</h1>
+
+    {# The theme lives in the browser, so this needs JavaScript. app.js shows it. #}
+    <section class="setting" data-theme-settings hidden>
+      <div class="setting-text">
+        <h2>Appearance</h2>
+        <p>Device follows your phone or computer. This choice is saved on this device only.</p>
+      </div>
+      <fieldset class="theme-choice">
+        <legend class="visually-hidden">Theme</legend>
+        <label><input type="radio" name="theme" value="system"><span>Device</span></label>
+        <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+        <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+      </fieldset>
+    </section>
+
+    {% if g.user and not g.user.is_demo %}
+      <section class="setting">
+        <div class="setting-text">
+          <h2>Your Name</h2>
+          <p>Shown on your posts and comments.</p>
+        </div>
         <form method="post" class="stack">
           {{ csrf() }}
           <input type="hidden" name="action" value="name">
-          {{ field('display_name', 'Name shown on your posts and comments', g.user.display_name, errors.display_name, attrs='required maxlength="60"') }}
+          {{ field('display_name', 'Name', g.user.display_name, errors.display_name, attrs='required maxlength="60"') }}
           <div class="form-actions"><button class="button" type="submit">Save name</button></div>
         </form>
       </section>
+
       {% if can.can_edit_about(g.user) %}
-        <section class="card">
-          <h2>About Page</h2>
-          <p class="card-note">Shown on the <a href="{{ url_for('public.about') }}">About page</a>. You can use Markdown.</p>
+        <section class="setting">
+          <div class="setting-text">
+            <h2>About Page</h2>
+            <p>Shown on the <a href="{{ url_for('public.about') }}">About page</a>. You can use Markdown.</p>
+          </div>
           <form method="post" class="stack">
             {{ csrf() }}
             <input type="hidden" name="action" value="about">
@@ -28,9 +47,12 @@
           </form>
         </section>
       {% endif %}
-      <section class="card">
-        <h2>Your Password</h2>
-        <p class="card-note">Changing your password logs you out on your other devices.</p>
+
+      <section class="setting">
+        <div class="setting-text">
+          <h2>Your Password</h2>
+          <p>Changing your password logs you out on your other devices.</p>
+        </div>
         <form method="post" class="stack">
           {{ csrf() }}
           <input type="hidden" name="action" value="password">
@@ -41,5 +63,29 @@
         </form>
       </section>
     {% endif %}
+
+    <section class="setting">
+      <div class="setting-text">
+        <h2>Your Account</h2>
+        {% if g.user and g.user.is_demo %}
+          <p>You are using the demo, so the name and password can't be changed.</p>
+        {% elif g.user %}
+          <p>You are logged in as {{ g.user.display_name }}{% if g.user.display_name != g.user.username %} ({{ g.user.username }}){% endif %}.</p>
+        {% else %}
+          <p>You don't need an account to read. Log in or sign up to join the conversation.</p>
+        {% endif %}
+      </div>
+      <div class="form-actions">
+        {% if g.user %}
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            {{ csrf() }}
+            <button class="button button-quiet" type="submit">Log out</button>
+          </form>
+        {% else %}
+          <a class="button button-quiet" href="{{ url_for('auth.signup') }}">Sign up</a>
+          <a class="button" href="{{ url_for('auth.login') }}">Log in</a>
+        {% endif %}
+      </div>
+    </section>
   </div>
 {% endblock %}
