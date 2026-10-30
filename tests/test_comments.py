@@ -242,6 +242,13 @@ def test_the_queue_is_for_writers_and_shows_only_their_posts(app, owner_id, auth
     assert b"On Marias post" in owner_page and b"On Rosas post" in owner_page
 
 
+def test_reject_is_a_red_outline_and_approve_is_green_and_last(app, author, reader_id, live):
+    add_comment(app, live, reader_id, status=PENDING)
+    page = author.get("/desk/comments").data
+    reject, approve = page.index(b"button-danger"), page.index(b"button-positive")
+    assert reject < approve  # the main button of a row is last on the right
+
+
 def test_a_post_back_in_draft_leaves_the_owners_queue(app, owner_id, author, reader_id, live):
     """Its title is private again, even from the owner. Only its author still sees it."""
     waiting = add_comment(app, live, reader_id, body="Still waiting", status=PENDING)

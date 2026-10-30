@@ -139,6 +139,16 @@ def test_my_posts_shows_only_mine_in_the_right_tabs(app, writer, author_id, owne
     assert writer.get("/desk/?tab=nonsense").status_code == 404
 
 
+def test_my_posts_has_a_pencil_named_for_screen_readers(app, writer, author_id):
+    live = add_post(app, author_id, title="A Live Post")
+    untitled = add_post(app, author_id, title="", body="", status=DRAFT)
+    page = writer.get("/desk/?tab=published").data
+    assert f'href="/desk/posts/{live}/edit" title="Edit" aria-label="Edit A Live Post"'.encode() in page
+    assert b"post-row-link" in page
+    assert b'aria-label="Edit Untitled Draft"' in writer.get("/desk/").data
+    assert f'/desk/posts/{untitled}/edit'.encode() in writer.get("/desk/").data
+
+
 # ---------- Public pages ----------
 
 def test_home_shows_only_live_posts(app, client, author_id):

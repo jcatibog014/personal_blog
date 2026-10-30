@@ -1,4 +1,5 @@
 {% extends "desk_base.html" %}
+{% from "_macros.html" import pencil_icon %}
 {% block title %}My Posts - {{ APP_NAME }}{% endblock %}
 {% block content %}
   <div class="page-head">
@@ -18,7 +19,7 @@
   {% if shown %}
     <ul class="post-rows">
       {% for post in shown %}
-        <li class="post-row">
+        <li class="post-row post-row-link">
           <div class="post-row-text">
             <h2><a href="{{ url_for('desk.edit_post', post_id=post.id) }}">{{ post.title or 'Untitled Draft' }}</a></h2>
             <p class="byline">
@@ -29,7 +30,7 @@
           </div>
           <div class="post-row-actions">
             {% if post.slug and tab != 'drafts' %}<a class="button button-quiet" href="{{ url_for('public.show_post', slug=post.slug) }}">View</a>{% endif %}
-            <a class="button button-quiet" href="{{ url_for('desk.edit_post', post_id=post.id) }}">Edit</a>
+            <a class="button button-quiet button-icon" href="{{ url_for('desk.edit_post', post_id=post.id) }}" title="Edit" aria-label="Edit {{ post.title or 'Untitled Draft' }}">{{ pencil_icon() }}</a>
           </div>
         </li>
       {% endfor %}
