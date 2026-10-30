@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, textarea %}
+{% block title %}Edit Your Comment - {{ APP_NAME }}{% endblock %}
+{% block content %}
+  <div class="narrow">
+    <h1>Edit Your Comment</h1>
+    <p class="page-intro">On <a href="{{ url_for('public.show_post', slug=comment.post.slug) }}">{{ comment.post.title }}</a>. You can edit a comment for 15 minutes after posting it.</p>
+    <form method="post" class="stack">
+      {{ csrf() }}
+      {{ textarea('body', 'Your comment', body, error, rows=6, attrs='maxlength="2000" required') }}
+      <div class="form-actions">
+        <a class="button button-quiet" href="{{ url_for('public.show_post', slug=comment.post.slug) }}#comment-{{ comment.id }}">Cancel</a>
+        <button class="button" type="submit">Save comment</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

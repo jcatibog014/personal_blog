@@ -5,7 +5,11 @@ themselves, so a rule can only ever be wrong in one place. They are plain
 functions: `user` is a User or None (a visitor who isn't logged in).
 tests/test_permissions.py checks them as one big table.
 """
-from .models import AUTHOR, OWNER, PUBLISHED
+from datetime import timedelta
+
+from .models import APPROVED, AUTHOR, OWNER, PENDING, PUBLISHED, REJECTED
+
+COMMENT_EDIT_WINDOW = timedelta(minutes=15)
 
 
 def is_active(user):
@@ -53,3 +57,57 @@ def can_take_down_post(user, post, now):
     if can_edit_post(user, post):
         return True
     return is_owner(user) and can_view_post(user, post, now)
+
+
+# ---------- Comments ----------
+
+def can_comment(user, post, now):
+    """Anyone logged in, on a post that is live and that they can see. The demo
+    can only comment on demo posts, so it can never write on the real site."""
+    if not is_active(user) or not is_live(post, now) or not can_view_post(user, post, now):
+        return False
+    return not user.is_demo or post.author.is_demo
+
+
+def is_own_comment(user, comment):
+    return is_active(user) and comment.user_id == user.id
+
+
+def can_edit_comment(user, comment, now):
+    """Your own, for 15 minutes. After that, an approved comment can't quietly
+    turn into something else."""
+    return (is_own_comment(user, comment) and comment.deleted_at is None
+            and comment.status != REJECTED and now <= comment.created_at + COMMENT_EDIT_WINDOW)
+
+
+def can_moderate_comment(user, comment):
+    """The owner moderates everything; an author moderates comments on their own posts."""
+    if not can_write(user) or comment.deleted_at is not None:
+        return False
+    return comment.post.author_id == user.id or (is_owner(user) and not comment.post.author.is_demo)
+
+
+def can_delete_comment(user, comment):
+    if comment.deleted_at is not None:
+        return False
+    return is_own_comment(user, comment) or can_moderate_comment(user, comment)
+
+
+def can_report_comment(user, comment):
+    """Anyone logged in, about someone else's visible comment."""
+    return (is_active(user) and comment.user_id != user.id and comment.status == APPROVED
+            and comment.deleted_at is None)
+
+
+def can_see_comment(user, comment):
+    """Approved ones are public. Pending ones show to their writer and the moderators."""
+    if comment.status == APPROVED:
+        return True
+    if comment.status == PENDING:
+        return is_own_comment(user, comment) or can_moderate_comment(user, comment)
+    return False
+
+
+def needs_approval(user, has_approved_comment):
+    """A reader's first comment waits; once one is approved, the rest appear at once."""
+    return not can_write(user) and not has_approved_comment

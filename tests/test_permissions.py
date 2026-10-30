@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from akda import permissions as can
-from akda.models import AUTHOR, DRAFT, OWNER, PUBLISHED, READER, Post, User
+from akda.models import APPROVED, AUTHOR, DRAFT, OWNER, PENDING, PUBLISHED, READER, REJECTED, Comment, Post, User
 
 from .conftest import add_post, edit_form, get_post, log_in_as, make_user, post as post_form
 
@@ -103,6 +103,100 @@ def test_can_take_down_post(who, live, draft, scheduled, demo_live):
 
 def test_a_post_scheduled_for_exactly_now_is_live():
     assert can.is_live(a_post(published_at=NOW), NOW) is True
+
+
+# ---------- Comments ----------
+
+def a_comment(writer="reader", status=APPROVED, post=LIVE, created_at=NOW, deleted_at=None):
+    return Comment(id=1, user_id=PEOPLE[writer].id, post=post, status=status, created_at=created_at,
+                   deleted_at=deleted_at, body="Hi")
+
+
+@pytest.mark.parametrize("who,live,draft,demo_live", [
+    ("visitor", False, False, False),
+    ("reader", True, False, False),
+    ("author", True, False, False),
+    ("owner", True, False, False),
+    ("blocked_author", False, False, False),
+    ("demo", False, False, True),  # never on a real post
+])
+def test_can_comment(who, live, draft, demo_live):
+    assert can.can_comment(PEOPLE[who], LIVE, NOW) is live
+    assert can.can_comment(PEOPLE[who], DRAFT_POST, NOW) is draft
+    assert can.can_comment(PEOPLE[who], DEMO_LIVE, NOW) is demo_live
+
+
+@pytest.mark.parametrize("who,own_comment,someone_elses", [
+    ("visitor", False, False), ("reader", True, False), ("owner", False, False),
+])
+def test_can_edit_comment_is_only_for_the_writer(who, own_comment, someone_elses):
+    assert can.can_edit_comment(PEOPLE[who], a_comment("reader"), NOW) is own_comment
+    assert can.can_edit_comment(PEOPLE[who], a_comment("author"), NOW) is someone_elses
+
+
+def test_the_edit_window_is_15_minutes():
+    reader = PEOPLE["reader"]
+    assert can.can_edit_comment(reader, a_comment(created_at=NOW - timedelta(minutes=15)), NOW) is True
+    assert can.can_edit_comment(reader, a_comment(created_at=NOW - timedelta(minutes=16)), NOW) is False
+
+
+def test_a_removed_or_rejected_comment_cannot_be_edited():
+    reader = PEOPLE["reader"]
+    assert can.can_edit_comment(reader, a_comment(deleted_at=NOW), NOW) is False
+    assert can.can_edit_comment(reader, a_comment(status=REJECTED), NOW) is False
+
+
+@pytest.mark.parametrize("who,on_own_post,on_other_post,on_demo_post", [
+    ("visitor", False, False, False),
+    ("reader", False, False, False),
+    ("author", True, False, False),
+    ("other_author", False, True, False),
+    ("owner", True, True, False),  # everything, except the sandbox
+    ("blocked_owner", False, False, False),
+    ("demo", False, False, True),
+])
+def test_can_moderate_comment(who, on_own_post, on_other_post, on_demo_post):
+    person = PEOPLE[who]
+    mine = a_post(author=PEOPLE["author"])
+    other = a_post(author=PEOPLE["other_author"])
+    assert can.can_moderate_comment(person, a_comment(post=mine)) is (on_own_post if who != "other_author" else False)
+    assert can.can_moderate_comment(person, a_comment(post=other)) is (on_other_post if who != "author" else False)
+    assert can.can_moderate_comment(person, a_comment(post=DEMO_LIVE)) is on_demo_post
+
+
+@pytest.mark.parametrize("who,expected", [
+    ("visitor", False), ("author", True), ("reader", True), ("other_author", True), ("owner", True),
+])
+def test_can_report_someone_elses_comment(who, expected):
+    # Written by the other author here, so "other_author" is the writer.
+    comment = a_comment("reader")
+    assert can.can_report_comment(PEOPLE[who], comment) is (expected and who != "reader")
+
+
+def test_cannot_report_a_hidden_comment():
+    assert can.can_report_comment(PEOPLE["author"], a_comment(status=PENDING)) is False
+    assert can.can_report_comment(PEOPLE["author"], a_comment(deleted_at=NOW)) is False
+
+
+@pytest.mark.parametrize("who,pending,rejected", [
+    ("visitor", False, False),
+    ("reader", True, False),  # its writer
+    ("author", True, False),  # the post's author
+    ("other_author", False, False),
+    ("owner", True, False),
+])
+def test_can_see_comment(who, pending, rejected):
+    person = PEOPLE[who]
+    assert can.can_see_comment(person, a_comment()) is True
+    assert can.can_see_comment(person, a_comment(status=PENDING)) is pending
+    assert can.can_see_comment(person, a_comment(status=REJECTED)) is rejected
+
+
+def test_needs_approval_only_for_a_readers_first_comment():
+    assert can.needs_approval(PEOPLE["reader"], False) is True
+    assert can.needs_approval(PEOPLE["reader"], True) is False
+    assert can.needs_approval(PEOPLE["author"], False) is False
+    assert can.needs_approval(PEOPLE["owner"], False) is False
 
 
 # ---------- The real routes ----------

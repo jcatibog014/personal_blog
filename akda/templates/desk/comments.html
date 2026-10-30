@@ -1,0 +1,58 @@
+{% extends "desk_base.html" %}
+{% block title %}Comments - {{ APP_NAME }}{% endblock %}
+{% macro action(endpoint, comment, label, style='button-quiet', confirm=None) %}
+  <form method="post" action="{{ url_for(endpoint, comment_id=comment.id) }}"{% if confirm %} data-confirm="{{ confirm }}"{% endif %}>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="back" value="{{ tab }}">
+    <button class="button {{ style }}" type="submit">{{ label }}</button>
+  </form>
+{% endmacro %}
+{% block content %}
+  <div class="page-head"><h1>Comments</h1></div>
+
+  <nav class="tabs" aria-label="Filter comments">
+    {% for name, label in tabs.items() %}
+      <a href="{{ url_for('discussion.queue', tab=name) }}"{% if name == tab %} aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  {% if shown %}
+    <ul class="post-rows">
+      {% for comment in shown %}
+        <li class="queue-row">
+          <div class="queue-text">
+            <p class="byline">
+              <strong>{{ comment.user.display_name }}</strong> on
+              <a href="{{ url_for('public.show_post', slug=comment.post.slug) }}#comment-{{ comment.id }}">{{ comment.post.title }}</a>
+              &middot; {{ comment.created_at|nice_datetime }}
+            </p>
+            <p class="comment-body">{{ comment.body }}</p>
+            {% if tab == 'reported' %}
+              <ul class="report-list">
+                {% for report in comment.reports if not report.resolved_at %}
+                  <li>{{ report.reason or 'No reason given.' }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+          <div class="queue-actions">
+            {% if tab == 'waiting' %}
+              {{ action('discussion.reject_comment', comment, 'Reject') }}
+              {{ action('discussion.approve_comment', comment, 'Approve', 'button-primary') }}
+            {% elif tab == 'reported' %}
+              {{ action('discussion.dismiss_reports', comment, 'Keep comment') }}
+              {{ action('discussion.delete_comment', comment, 'Remove', 'button-danger', 'Remove this comment?') }}
+            {% else %}
+              {{ action('discussion.delete_comment', comment, 'Remove', 'button-danger', 'Remove this comment?') }}
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state">
+      <h2>{% if tab == 'waiting' %}Nothing Waiting{% elif tab == 'reported' %}No Reports{% else %}No Comments Yet{% endif %}</h2>
+      <p>{% if tab == 'waiting' %}New readers' first comments will appear here.{% elif tab == 'reported' %}Comments that readers report will appear here.{% else %}Approved comments on your posts will appear here.{% endif %}</p>
+    </div>
+  {% endif %}
+{% endblock %}

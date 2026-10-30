@@ -1,13 +1,14 @@
 """The data model.
 
-    users ──< posts
+    users ─┬─< posts ──< comments ──< comment_reports >── users
+           └─< comments (parent_id points at another comment: one level of replies)
 
 Roles live on the user (permissions.py holds every rule about them).
 Times are naive UTC (dates.utcnow()).
 """
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, String, Text
+from sqlalchemy import CheckConstraint, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .dates import utcnow
@@ -20,6 +21,10 @@ ROLES = (OWNER, AUTHOR, READER)
 
 DRAFT = "draft"
 PUBLISHED = "published"
+
+PENDING = "pending"
+APPROVED = "approved"
+REJECTED = "rejected"
 
 
 class User(Base):
@@ -75,3 +80,45 @@ class Post(Base):
     __mapper_args__ = {"version_id_col": revision}
 
     author: Mapped[User] = relationship(back_populates="posts")
+    comments: Mapped[list["Comment"]] = relationship(back_populates="post", cascade="all, delete-orphan",
+                                                     passive_deletes=True)
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected')", name="status_known"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    # The table points at itself: a reply's parent is another comment. comments.py
+    # keeps it to one level, so a reply to a reply joins the same thread.
+    parent_id: Mapped[int | None] = mapped_column(ForeignKey("comments.id", ondelete="CASCADE"), index=True)
+    body: Mapped[str] = mapped_column(Text)  # plain text: the templates escape it, it is never Markdown
+    status: Mapped[str] = mapped_column(String(10), default=PENDING)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    edited_at: Mapped[datetime | None]
+    # Soft delete: the row stays, so replies keep their place under "removed".
+    deleted_at: Mapped[datetime | None]
+
+    post: Mapped[Post] = relationship(back_populates="comments")
+    user: Mapped[User] = relationship()
+    parent: Mapped["Comment | None"] = relationship(remote_side=[id])
+    reports: Mapped[list["CommentReport"]] = relationship(back_populates="comment", cascade="all, delete-orphan",
+                                                          passive_deletes=True)
+
+
+class CommentReport(Base):
+    __tablename__ = "comment_reports"
+    # One report per person: reporting twice can't make a comment look worse.
+    __table_args__ = (UniqueConstraint("comment_id", "reporter_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    comment_id: Mapped[int] = mapped_column(ForeignKey("comments.id", ondelete="CASCADE"), index=True)
+    reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    reason: Mapped[str] = mapped_column(String(200), default="")
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    resolved_at: Mapped[datetime | None]
+
+    comment: Mapped[Comment] = relationship(back_populates="reports")
+    reporter: Mapped[User] = relationship()
