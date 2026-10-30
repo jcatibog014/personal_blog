@@ -40,7 +40,8 @@ How you get each account:
 - Write comments and one level of replies. A new reader's first comment waits for approval.
 
 **For authors**
-- Write in Markdown and see the result at the same time.
+- Write in Markdown and see the result at the same time. The word count and reading time change as you type.
+- Use the keyboard: Ctrl+S saves a draft, and Ctrl+Enter publishes (it asks first).
 - Drafts save by themselves while you type.
 - Go back to an older version of a post.
 - Choose a date and time, and the post goes live by itself.
@@ -73,7 +74,8 @@ How you get each account:
 
 | | |
 |---|---|
-| ![The editor](docs/screenshots/editor.png) The editor | ![My posts](docs/screenshots/my-posts.png) My posts |
+| ![The editor](docs/screenshots/editor.png) The editor | ![The editor with Post details open](docs/screenshots/editor-details.png) Post details |
+| ![The editor in dark mode](docs/screenshots/editor-dark.png) The editor, in dark mode | ![My posts](docs/screenshots/my-posts.png) My posts |
 | ![Older versions of a post](docs/screenshots/versions.png) Versions | ![Comments that wait for approval](docs/screenshots/moderation.png) Approving comments |
 | ![The account menu at the bottom of the sidebar](docs/screenshots/user-menu.png) The account menu | ![My posts on a phone](docs/screenshots/my-posts-phone.png) My posts on a phone |
 

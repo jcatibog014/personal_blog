@@ -67,7 +67,9 @@
 
   {% block footer %}
   <footer class="site-footer">
-    <p>{{ APP_NAME }}. A personal blog. <a href="{{ url_for('public.feed') }}">RSS feed</a></p>
+    {% from "_macros.html" import rss_icon %}
+    <p>{{ APP_NAME }}. A personal blog.</p>
+    <a class="rss-link" href="{{ url_for('public.feed') }}">{{ rss_icon() }} RSS feed</a>
   </footer>
   {% endblock %}
 </body>

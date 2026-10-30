@@ -23,14 +23,16 @@
       <div class="form-actions">
         <a class="button button-quiet" href="{{ url_for('desk.versions', post_id=post.id) }}">Versions ({{ version_count }})</a>
         <button class="button button-quiet no-js-only" type="submit" name="action" value="preview">Preview</button>
+        {# data-shortcut: which button the keyboard presses (setUpShortcuts in app.js).
+           A live post has no "save" shortcut: Ctrl+S is a habit, and must not change what readers see. #}
         {% if post.status == 'draft' %}
-          <button class="button button-quiet" type="submit" name="action" value="save">Save draft</button>
-          <button class="button" type="submit" name="action" value="publish" data-publish-button>Publish</button>
+          <button class="button button-quiet" type="submit" name="action" value="save" data-shortcut="save">Save draft</button>
+          <button class="button" type="submit" name="action" value="publish" data-publish-button data-shortcut="publish" data-shortcut-confirm>Publish</button>
         {% elif is_scheduled %}
           <button class="button button-quiet" type="submit" name="action" value="publish_now">Publish now</button>
-          <button class="button" type="submit" name="action" value="update">Update</button>
+          <button class="button" type="submit" name="action" value="update" data-shortcut="save publish">Update</button>
         {% else %}
-          <button class="button" type="submit" name="action" value="update">Update</button>
+          <button class="button" type="submit" name="action" value="update" data-shortcut="publish" data-shortcut-confirm>Update</button>
         {% endif %}
       </div>
     </div>
@@ -41,8 +43,12 @@
       <p class="notice">This is the text from {{ restored_from.saved_at|nice_datetime }}. Readers still see the current text until you press Update.</p>
     {% endif %}
 
-    <div class="editor-fields">
-      <div class="editor-title">{{ field('title', 'Title', form.title, errors.title, attrs='maxlength="200"') }}</div>
+    <div class="editor-title">{{ field('title', 'Title', form.title, errors.title, attrs='maxlength="200" placeholder="Title"') }}</div>
+
+    {# Just the title and the text at first. The rest opens by itself if it has a problem. #}
+    <details class="editor-details"{% if errors.summary or errors.tags or errors.publish_at or errors.cover %} open{% endif %}>
+      <summary>Post details <span class="hint">{{ 'Summary, tags, date and cover' if post.status == 'draft' or is_scheduled else 'Summary, tags and cover' }}</span></summary>
+      <div class="editor-fields">
       {{ field('summary', 'Summary', form.summary, errors.summary, hint='Optional, shown on cards', attrs='maxlength="300"') }}
       {{ field('tags', 'Tags', form.tags, errors.tags, hint='Up to 5, with commas between') }}
       {% if post.status == 'draft' or is_scheduled %}
@@ -59,7 +65,8 @@
           </div>
         {% endif %}
       </div>
-    </div>
+      </div>
+    </details>
 
     <div class="pane-tabs" data-pane-tabs hidden>
       <button type="button" class="pane-tab" data-pane-tab="write" aria-pressed="true">Write</button>
@@ -76,6 +83,10 @@
       <button type="button" class="tool-button" data-insert="link">Link</button>
       <button type="button" class="tool-button" data-picture-button>Picture</button>
       <input type="file" accept="image/*" data-picture-input hidden>
+      <div class="editor-meta">
+        <span data-key-hint hidden></span>
+        <span data-word-count data-words-per-minute="{{ words_per_minute }}"></span>
+      </div>
     </div>
 
     <div class="editor-panes" data-panes>
