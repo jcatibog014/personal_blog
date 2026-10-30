@@ -1,0 +1,231 @@
+/* Akda: an editorial magazine. Ink on paper, thin rules, one crimson accent.
+   Dark mode is defined twice (system setting + the toggle): change both together. */
+
+@font-face { font-family: "Playfair Display"; src: url("fonts/playfair-display-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Source Serif 4"; src: url("fonts/source-serif-4-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Source Serif 4"; src: url("fonts/source-serif-4-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Source Serif 4"; src: url("fonts/source-serif-4-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+
+:root {
+  --paper: #fbfaf6;
+  --surface: #ffffff;
+  --ink: #141414;
+  --ink-soft: #57544d;
+  --rule: #d9d5cc;
+  --accent: #a4161a;
+  --on-accent: #ffffff;
+  --flash: #f3efe4;
+  --danger: #a4161a;
+  --headline: "Playfair Display", Georgia, "Times New Roman", serif;
+  --reading: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --control-height: 2.75rem;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121211;
+    --surface: #1b1b19;
+    --ink: #efede6;
+    --ink-soft: #aca89e;
+    --rule: #3a3934;
+    --accent: #ff7a70;
+    --on-accent: #161615;
+    --flash: #24231f;
+    --danger: #ff7a70;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #121211;
+  --surface: #1b1b19;
+  --ink: #efede6;
+  --ink-soft: #aca89e;
+  --rule: #3a3934;
+  --accent: #ff7a70;
+  --on-accent: #161615;
+  --flash: #24231f;
+  --danger: #ff7a70;
+  color-scheme: dark;
+}
+
+/* Wide screens: everything is in rem, so it grows with these steps. */
+html { font-size: 16px; }
+@media (min-width: 1600px) { html { font-size: 17px; } }
+@media (min-width: 1920px) { html { font-size: 18px; } }
+@media (min-width: 2300px) { html { font-size: 19px; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--ui);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3 { font-family: var(--headline); font-weight: 700; line-height: 1.15; margin: 0 0 .5em; }
+h1 { font-size: 2.5rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.2rem; }
+p { margin: 0 0 1em; }
+a { color: inherit; text-underline-offset: .15em; }
+a:hover { color: var(--accent); }
+img { max-width: 100%; height: auto; display: block; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.skip-link { position: absolute; left: -999rem; }
+.skip-link:focus { left: 1rem; top: 1rem; background: var(--surface); padding: .5rem 1rem; z-index: 10; }
+
+/* ---------- The masthead ---------- */
+
+.masthead { padding: 0 clamp(1rem, 4vw, 3rem); }
+.masthead-top { position: relative; display: flex; justify-content: center; align-items: center; padding: 1.5rem 0 1rem; }
+.wordmark {
+  font-family: var(--headline);
+  font-weight: 700;
+  font-size: clamp(2.75rem, 6vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: -.01em;
+  text-decoration: none;
+}
+.menu-button {
+  position: absolute;
+  right: 0;
+  height: var(--control-height);
+  padding: 0 .9rem;
+  background: none;
+  color: inherit;
+  border: 1px solid var(--rule);
+  font: inherit;
+  cursor: pointer;
+}
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem 2rem;
+  padding: .6rem 0;
+  border-top: 1px solid var(--ink);
+  border-bottom: 3px double var(--ink);
+  font-size: .95rem;
+}
+.nav-links, .nav-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+.site-nav a { text-decoration: none; }
+.site-nav a:hover { text-decoration: underline; }
+.site-nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+.nav-user { font-weight: 600; }
+.nav-tools form { margin: 0; }
+.link-button { padding: 0; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
+.link-button:hover { color: var(--accent); text-decoration: underline; }
+
+/* With JavaScript, phones get a menu button. Without it, the menu just stays open. */
+@media (min-width: 48rem) { .menu-button { display: none !important; } }
+@media (max-width: 47.99rem) {
+  .masthead-top { justify-content: flex-start; }
+  .wordmark { font-size: 2.75rem; }
+  .js .site-nav { display: none; border-bottom: 1px solid var(--ink); }
+  .js .site-nav.is-open { display: flex; flex-direction: column; align-items: flex-start; }
+  .js .site-nav.is-open .nav-links, .js .site-nav.is-open .nav-tools { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .js .masthead-top { border-bottom: 3px double var(--ink); }
+  .js .masthead .site-nav.is-open { border-top: 0; }
+}
+
+/* ---------- The page ---------- */
+
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: 110rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 3rem) 3rem;
+}
+.narrow { max-width: 40rem; margin: 0 auto; }
+.page-intro { color: var(--ink-soft); font-size: 1.1rem; }
+.kicker { font-size: .78rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 .5rem; }
+.empty-state { text-align: center; max-width: 36rem; margin: 4rem auto; }
+.empty-state p { color: var(--ink-soft); }
+.site-footer { padding: 1.5rem clamp(1rem, 4vw, 3rem); border-top: 1px solid var(--rule); color: var(--ink-soft); font-size: .9rem; text-align: center; }
+.site-footer p { margin: 0; }
+
+.flashes { max-width: 110rem; width: 100%; margin: 1rem auto 0; padding: 0 clamp(1rem, 4vw, 3rem); }
+.flash { margin: 0 0 .5rem; padding: .7rem 1rem; background: var(--flash); border-left: 3px solid var(--accent); }
+
+/* ---------- Forms and buttons ---------- */
+
+.card { background: var(--surface); border: 1px solid var(--rule); padding: 1.5rem; margin-bottom: 1.5rem; }
+.card-note { color: var(--ink-soft); font-size: .95rem; }
+.stack { display: flex; flex-direction: column; gap: 1rem; }
+.field { display: flex; flex-direction: column; gap: .3rem; }
+.field-label { font-weight: 600; font-size: .95rem; }
+.hint { font-weight: 400; color: var(--ink-soft); }
+.field input, .field textarea, .field select, .search-box input {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: .5rem .7rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--ink-soft);
+  border-radius: 0;
+  font: inherit;
+}
+.field textarea { resize: vertical; }
+.field-error, .form-error { color: var(--danger); font-size: .92rem; margin: 0; }
+.form-error { margin-bottom: 1rem; font-weight: 600; }
+.has-error input, .has-error textarea { border-color: var(--danger); }
+.form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .6rem; }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  padding: 0 1.2rem;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.button:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.button-quiet { background: transparent; color: var(--ink); border-color: var(--ink-soft); font-weight: 400; }
+.button-quiet:hover { background: transparent; color: var(--accent); border-color: var(--accent); }
+.button-danger { background: transparent; color: var(--danger); border-color: var(--danger); font-weight: 400; }
+.button-danger:hover { background: var(--danger); border-color: var(--danger); color: var(--on-accent); }
+.hp { position: absolute; left: -999rem; }
+
+/* ---------- Login and sign-up ---------- */
+
+.welcome-layout .page { max-width: none; padding: 0; display: flex; }
+.welcome { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.welcome-panel { background: var(--ink); color: var(--paper); padding: clamp(2rem, 6vw, 5rem); }
+.welcome-panel .wordmark { color: inherit; }
+.welcome-line { font-family: var(--headline); font-size: clamp(1.75rem, 3.5vw, 3rem); line-height: 1.15; margin: 3rem 0 1rem; max-width: 18em; }
+.welcome-note { max-width: 30em; opacity: .85; }
+.welcome-cards { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2rem 1rem; }
+.welcome-cards .card { width: 100%; max-width: 26rem; margin: 0; }
+.welcome-cards h1 { font-size: 2rem; }
+.welcome-cards .button { width: 100%; }
+.welcome-cards .card-note { margin: 1rem 0 0; }
+.welcome-cards .form-actions { display: block; }
+@media (max-width: 47.99rem) {
+  .welcome { grid-template-columns: minmax(0, 1fr); }
+  .welcome-line { margin-top: 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

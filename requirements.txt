@@ -1,0 +1,9 @@
+Flask>=3.1,<4
+SQLAlchemy>=2.0,<2.1  # the ORM: models.py is the data model in Python classes
+alembic>=1.13,<2  # database migrations (flask --app akda upgrade-db)
+psycopg[binary]>=3.2,<4  # talks to PostgreSQL (Neon) on the live site; SQLite needs nothing extra
+markdown-it-py>=3,<5  # turns what authors write (Markdown) into HTML
+nh3>=0.2,<1  # cleans that HTML, so a post can never run a script in a reader's browser
+Pillow>=11  # makes uploaded pictures small (images.py)
+gunicorn>=23  # the web server on Render (Linux only; locally use "flask run")
+pytest>=8

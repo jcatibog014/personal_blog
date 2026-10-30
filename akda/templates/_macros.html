@@ -1,0 +1,21 @@
+{# Small building blocks used by many pages. #}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro field(name, label, value='', error=None, type='text', hint=None, attrs='') %}
+  <label class="field{% if error %} has-error{% endif %}">
+    <span class="field-label">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</span>
+    <input type="{{ type }}" name="{{ name }}" value="{{ value if value is not none else '' }}" {{ attrs|safe }}
+           {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
+    {% if error %}<p class="field-error" id="{{ name }}-error">{{ error }}</p>{% endif %}
+  </label>
+{% endmacro %}
+
+{% macro textarea(name, label, value='', error=None, hint=None, rows=4, attrs='') %}
+  <label class="field{% if error %} has-error{% endif %}">
+    <span class="field-label">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</span>
+    <textarea name="{{ name }}" rows="{{ rows }}" {{ attrs|safe }}
+              {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>{{ value or '' }}</textarea>
+    {% if error %}<p class="field-error" id="{{ name }}-error">{{ error }}</p>{% endif %}
+  </label>
+{% endmacro %}
