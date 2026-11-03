@@ -15,7 +15,7 @@ Python 3.13 is at `%LOCALAPPDATA%\Programs\Python\Python313\python.exe`. Use the
 - Run: `.venv\Scripts\flask --app akda run --debug --port 5005`, then open http://127.0.0.1:5005. (Ports: Swap Meter 5000, Ambon Alert 5001, Ang Gastos! 5002, Sangkap 5003, Gawi 5004.)
 - Test: `.venv\Scripts\python -m pytest`. Every test gets a fresh SQLite file and never uses the internet. Set `TEST_DATABASE_URL` to an **empty** Neon branch to run the same tests on PostgreSQL (each test drops and remakes the tables). SQLAlchemy warnings fail the tests (`pytest.ini`).
 - Other commands: `set-password <name>`, `reset-demo`.
-- Screenshots: `docs/make_practice_data.py`, then `docs/take_screenshots.py` (Playwright + Edge; its top comment has the steps). Demo covers: `docs/make_covers.py`.
+- Screenshots: `docs/make_practice_data.py`, then `docs/take_screenshots.py` (Playwright + Edge; its top comment has the steps). Demo covers: `docs/make_covers.py`. App icon: `docs/make_icons.py` (Playwright; it draws the masthead's "A" in Playfair Display on a crimson tile into `akda/static/icons/`: rounded PNGs for tabs and apps, square ones for iPhone and Android's maskable icon, and `favicon.ico`). `static/site.webmanifest` lists them; `/favicon.ico` is served from the root too.
 
 ## Architecture
 

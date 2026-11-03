@@ -12,6 +12,9 @@ from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 mimetypes.add_type("image/webp", ".webp")
+# Python doesn't know this one, and browsers want the right type for the app manifest
+# (the name and icons used when someone adds the blog to a home screen).
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 DEV_SECRET_KEY = "dev-only-not-secret"
 
