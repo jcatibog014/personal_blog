@@ -2,7 +2,9 @@
 from datetime import UTC
 from email.utils import format_datetime
 
-from flask import Blueprint, Response, abort, g, render_template, request, url_for
+from pathlib import Path
+
+from flask import Blueprint, Response, abort, current_app, g, render_template, request, send_from_directory, url_for
 from sqlalchemy import select
 
 from .. import comments, db, permissions, posts, render, tags
@@ -143,6 +145,13 @@ def image_thumb(image_id):
     picture = visible_picture(image_id)
     # Older pictures have no thumbnail, so they send the full one.
     return picture_response(picture, picture.thumb or picture.data)
+
+
+@bp.get("/favicon.ico")
+def favicon():
+    """Some browsers and feed readers ask for this address without reading the page."""
+    return send_from_directory(Path(current_app.static_folder) / "icons", "favicon.ico",
+                               mimetype="image/vnd.microsoft.icon", max_age=86400)
 
 
 @bp.get("/healthz")

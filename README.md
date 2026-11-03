@@ -1,5 +1,7 @@
 # Akda
 
+<img src="akda/static/icons/icon-192.png" width="96" height="96" alt="The Akda app icon: a white A with a line under it, on a red square">
+
 **Akda** means "literary work" in Filipino. It is a personal blog. Authors write and publish posts. Readers leave comments. The owner takes care of the site.
 
 I made this project to practice three skills: **authentication** (who are you?), **authorization** (what can you do?) and **relational data** (how do the tables connect?).
@@ -93,6 +95,8 @@ How you get each account:
 | ![The Settings page](docs/screenshots/settings.png) Settings | ![The home page in dark mode](docs/screenshots/home-dark.png) Dark mode |
 | ![The home page on a phone](docs/screenshots/phone.png) On a phone | ![The menu on a phone](docs/screenshots/phone-menu.png) The menu on a phone |
 
+The app icon is the "A" from the name, in the same font, on the site's red. A program draws it in every size that phones and browsers need (`docs/make_icons.py`).
+
 The sun, road and book pictures are demo covers. A program draws them (`docs/make_covers.py`). The people in these pictures are made up.
 
 ## Tools
@@ -109,7 +113,7 @@ The sun, road and book pictures are demo covers. A program draws them (`docs/mak
 | nh3 | Library | Cleans the HTML, so it is safe |
 | Pillow | Library | Makes pictures small |
 | pytest | Test tool | Checks that everything works |
-| Playwright | Browser tool | Takes the pictures for this page |
+| Playwright | Browser tool | Takes the pictures for this page and draws the app icon |
 | Render | Hosting platform | Runs the live site |
 | HTML, CSS, JavaScript | Languages | The pages. They also work without JavaScript. |
 
